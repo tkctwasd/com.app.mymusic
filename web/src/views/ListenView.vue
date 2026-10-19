@@ -174,11 +174,12 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
 
 .shortcuts { display: flex; gap: 18px; margin-top: 28px; overflow-x: auto; scrollbar-width: none; padding: 4px; margin-left: -4px; margin-right: -4px; }
 .sc { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 84px; flex-shrink: 0; }
-.sc-art { position: relative; width: 72px; }
-.sc-cv { width: 72px; box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--line); transition: box-shadow .3s, transform .3s var(--spring); }
-.sc:hover .sc-cv { transform: scale(1.06); }
-.sc.on .sc-cv { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
-.sc-play { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; background: rgb(0 0 0 / .35); color: #fff; opacity: 0; transition: opacity .2s; }
+.sc-art { position: relative; width: 72px; height: 72px; border-radius: 50%; padding: 3px; box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow .3s, transform .3s var(--spring); }
+.sc:hover .sc-art { transform: scale(1.06); }
+.sc.on .sc-art { box-shadow: inset 0 0 0 2px var(--accent); }
+/* clip-path: cắt tròn chắc chắn, tránh lỗi ảnh vuông lòi ra khi đang transform */
+.sc-cv { width: 100%; clip-path: circle(50%); }
+.sc-play { position: absolute; inset: 3px; border-radius: 50%; clip-path: circle(50%); display: grid; place-items: center; background: rgb(0 0 0 / .35); color: #fff; opacity: 0; transition: opacity .2s; }
 .sc:hover .sc-play { opacity: 1; }
 .sc-name { max-width: 100%; font-size: 12.5px; color: var(--text-2); }
 .sc.on .sc-name { color: var(--accent); }
@@ -193,6 +194,6 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
   .greet h1 { font-size: 24px; }
   .shortcuts { gap: 12px; }
   .sc { width: 70px; }
-  .sc-art, .sc-cv { width: 60px; }
+  .sc-art { width: 60px; height: 60px; }
 }
 </style>
