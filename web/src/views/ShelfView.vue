@@ -88,7 +88,7 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
       <div class="tools">
         <label class="filter"><Icon name="search" size="16" /><input v-model="q" placeholder="Lọc trong Kệ" /></label>
         <template v-if="tab !== 'songs'">
-          <button class="btn btn-outline sm" @click="sortMenu"><Icon name="sort" size="15" /> {{ sorts[sort] }}</button>
+          <button class="btn btn-outline sm" @click="sortMenu"><Icon name="sort" size="15" /><span class="sort-l">{{ sorts[sort] }}</span></button>
           <div class="seg view">
             <button :class="{ on: ui.shelfView === 'grid' }" title="Dạng lưới" @click="ui.set('shelfView', 'grid')"><Icon name="grid" size="16" /></button>
             <button :class="{ on: ui.shelfView === 'list' }" title="Dạng danh sách" @click="ui.set('shelfView', 'list')"><Icon name="list" size="16" /></button>
@@ -99,7 +99,8 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
 
     <!-- Bài hát -->
     <template v-if="tab === 'songs'">
-      <p class="hint muted"><Icon name="select" size="15" /> Mẹo: <kbd>Ctrl</kbd> + bấm hoặc <kbd>Shift</kbd> + bấm để chọn nhiều bài{{ ui.isMobile ? ' (trên điện thoại: nhấn giữ)' : '' }}.</p>
+      <p v-if="ui.isMobile" class="hint muted"><Icon name="select" size="15" /> Mẹo: nhấn giữ một bài để chọn nhiều bài.</p>
+      <p v-else class="hint muted"><Icon name="select" size="15" /> Mẹo: <kbd>Ctrl</kbd> + bấm hoặc <kbd>Shift</kbd> + bấm để chọn nhiều bài.</p>
       <TrackList v-if="songs.length" :tracks="songs" :context="{ name: 'Tất cả bài hát', path: '/songs' }" />
       <p v-else class="muted empty">Không có bài nào khớp.</p>
     </template>
@@ -179,9 +180,12 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
 .empty-card p { margin: 6px 0 16px; }
 @media (max-width: 767px) {
   .actions .btn-soft { display: none; }
-  .tabs { width: 100%; overflow-x: auto; scrollbar-width: none; }
-  .tools { width: 100%; }
-  .filter { flex: 1; width: auto; }
+  .tabs { width: 100%; }
+  .tabs button { flex: 1; min-width: 0; padding: 0 4px; }
+  .tools { width: 100%; min-width: 0; }
+  .filter { flex: 1; width: auto; min-width: 0; }
+  .tools .sm { width: 38px; padding: 0; flex-shrink: 0; }
+  .sort-l { display: none; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
   .lplay { opacity: 1; }
 }
