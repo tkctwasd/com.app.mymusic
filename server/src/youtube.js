@@ -7,8 +7,17 @@ import crypto from 'node:crypto';
 
 export const YT_RE = /^https?:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//;
 
+// Cookies YouTube (khi chạy trên server cloud, YouTube hay đòi xác minh "not a bot"):
+// đặt biến YT_COOKIES = nội dung file cookies.txt (định dạng Netscape) -> ghi ra file tạm và thêm --cookies.
+let cookieFile = null;
+if (process.env.YT_COOKIES) {
+  cookieFile = path.join(os.tmpdir(), 'yt-cookies.txt');
+  fs.writeFileSync(cookieFile, process.env.YT_COOKIES.replace(/\\n/g, '\n')); // cho phép dán 1 dòng với \n
+}
+const withCookies = (args) => (cookieFile ? ['--cookies', cookieFile, ...args] : args);
+
 const run = (args) => new Promise((resolve, reject) =>
-  execFile('yt-dlp', args, { maxBuffer: 1 << 28 }, (err, out, errOut) => (err ? reject(new Error(lastLine(errOut) || err.message)) : resolve(out))));
+  execFile('yt-dlp', withCookies(args), { maxBuffer: 1 << 28 }, (err, out, errOut) => (err ? reject(new Error(lastLine(errOut) || err.message)) : resolve(out))));
 const lastLine = (s = '') => s.trim().split('\n').filter((l) => l.includes('ERROR')).pop() || s.trim().split('\n').pop();
 // Bỏ phần rác trong tiêu đề YouTube: ♪, (Official MV), [Lyrics/Vietsub], | Lyrics ...
 const JUNK = /official|lyrics?|vietsub|engsub|karaoke|\bm\/?v\b|\baudio\b|\bvideo\b|visuali[sz]er|\bhd\b|\b4k\b|1080p/i;
@@ -46,7 +55,7 @@ export function downloadAudio(url, onProgress = () => {}) {
     '--print', 'after_move:META %(.{title,uploader,artist,track,album,duration})j',
   ];
   return new Promise((resolve, reject) => {
-    const p = spawn('yt-dlp', args);
+    const p = spawn('yt-dlp', withCookies(args));
     let meta, err = '';
     p.stdout.on('data', (buf) => {
       for (const line of buf.toString().split('\n')) {

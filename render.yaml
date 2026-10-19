@@ -1,0 +1,24 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> chọn repo này. Biến sync:false sẽ được hỏi khi tạo.
+services:
+  - type: web
+    name: my-music
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/auth
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: mymusic
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: my-music
+      - key: APP_PASSWORD
+        sync: false
+      - key: APP_SECRET
+        generateValue: true
+      - key: YT_COOKIES # không bắt buộc: nội dung cookies.txt nếu YouTube chặn "not a bot"
+        sync: false
