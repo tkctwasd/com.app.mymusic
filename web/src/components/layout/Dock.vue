@@ -81,7 +81,7 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
         <button class="icon-btn" :class="{ liked: t.liked }" :title="t.liked ? 'Bỏ thích (L)' : 'Thích (L)'" @click="lib.toggleLike(t)"><Icon :name="t.liked ? 'heartFill' : 'heart'" size="18" /></button>
         <div class="vol" @wheel="wheelVol">
           <button class="icon-btn" :title="player.muted ? 'Bật tiếng (M)' : 'Tắt tiếng (M)'" @click="player.toggleMute()"><Icon :name="volIcon" size="18" /></button>
-          <div class="vol-pop"><Slider :value="player.muted ? 0 : player.volume" :max="1" :wheel-step="0.05" label="Âm lượng" @input="player.setVolume($event)" @change="player.setVolume($event)" /></div>
+          <div class="vol-pop"><Slider :value="player.muted ? 0 : player.volume" :max="1" :wheel-step="0.05" label="Âm lượng" @input="player.setVolume($event)" @change="player.setVolume($event)" /><span class="vol-pct">{{ player.muted ? 0 : Math.round(player.volume * 100) }}%</span></div>
         </div>
         <span v-if="player.sleep" class="sleep" title="Hẹn giờ tắt" @click="ui.openStage()"><Icon name="moon" size="14" />{{ player.sleep.mode === 'end' ? 'hết bài' : fmtTime(player.sleepLeft) }}</span>
         <button class="icon-btn up" title="Mở màn hình đang phát" @click="ui.openStage()"><Icon name="chevronUp" size="20" /></button>
@@ -111,7 +111,7 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
 .wave-wrap { flex: 1; min-width: 120px; display: flex; align-items: center; gap: 8px; }
 .time { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; min-width: 32px; text-align: center; }
 .vol { position: relative; }
-.vol-pop { position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translateX(-50%) translateY(6px); width: 140px; padding: 10px 14px; border-radius: 14px;
+.vol-pop { display: flex; align-items: center; gap: 8px; position: absolute; bottom: calc(100% + 14px); left: 50%; transform: translateX(-50%) translateY(6px); width: 180px; padding: 10px 14px; border-radius: 14px;
   background: var(--glass-strong); backdrop-filter: blur(20px); border: 1px solid var(--line); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: all .2s var(--ease); }
 .vol:hover .vol-pop, .vol:focus-within .vol-pop { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
 .vol-pop::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 16px; }
@@ -139,4 +139,6 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
 
 .dock-enter-active, .dock-leave-active { transition: transform .4s var(--spring), opacity .25s; }
 .dock-enter-from, .dock-leave-to { opacity: 0; transform: translateX(-50%) translateY(40px) scale(.96); }
+.vol-pop > :first-child, .volume > :nth-child(2) { flex: 1; min-width: 0; }
+.vol-pct { min-width: 38px; text-align: right; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-2); flex-shrink: 0; }
 </style>

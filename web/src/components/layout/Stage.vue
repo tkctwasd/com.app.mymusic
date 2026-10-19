@@ -117,7 +117,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFs));
             </button>
             <div class="volume">
               <button class="icon-btn" @click="player.toggleMute()"><Icon :name="volIcon" size="18" /></button>
-              <Slider :value="player.muted ? 0 : player.volume" :max="1" :wheel-step="0.05" label="Âm lượng" @input="player.setVolume($event)" @change="player.setVolume($event)" />
+              <Slider :value="player.muted ? 0 : player.volume" :max="1" :wheel-step="0.05" label="Âm lượng" @input="player.setVolume($event)" @change="player.setVolume($event)" /><span class="vol-pct">{{ player.muted ? 0 : Math.round(player.volume * 100) }}%</span>
             </div>
           </div>
         </div>
@@ -223,7 +223,7 @@ h1 { font-size: clamp(20px, 2.2vw, 30px); font-weight: 600; line-height: 1.2; di
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--hover); color: var(--text-2); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .pill:hover { background: var(--press); color: var(--text); }
 .pill.on { background: var(--accent-soft); color: var(--accent); }
-.volume { display: flex; align-items: center; gap: 4px; width: 180px; }
+.volume { display: flex; align-items: center; gap: 4px; width: 220px; }
 
 .side { display: flex; flex-direction: column; min-height: 0; }
 .tabs { align-self: flex-start; margin-bottom: 12px; }
@@ -292,4 +292,6 @@ dd { margin: 0; min-width: 0; }
 
 .stage-enter-active, .stage-leave-active { transition: transform .5s var(--spring), opacity .3s; }
 .stage-enter-from, .stage-leave-to { transform: translateY(100%); opacity: .6; }
+.vol-pop > :first-child, .volume > :nth-child(2) { flex: 1; min-width: 0; }
+.vol-pct { min-width: 38px; text-align: right; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-2); flex-shrink: 0; }
 </style>
