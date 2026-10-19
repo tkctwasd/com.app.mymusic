@@ -26,6 +26,7 @@ import { useUi } from './stores/ui.js';
 import { useShortcuts } from './composables/useShortcuts.js';
 import { useTheme } from './composables/useTheme.js';
 import { useFavicon } from './composables/useFavicon.js';
+import { useAutoUpdate } from './composables/useAutoUpdate.js';
 
 const lib = useLibrary(), player = usePlayer(), ui = useUi(), route = useRoute();
 const state = ref('loading'); // loading | login | ready | error
@@ -39,6 +40,7 @@ let es;
 useShortcuts();
 useTheme();
 useFavicon();
+useAutoUpdate();
 
 async function boot() {
   state.value = 'loading';

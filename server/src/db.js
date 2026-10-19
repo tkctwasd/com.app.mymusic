@@ -40,7 +40,12 @@ function jsonRepos() {
 
 async function mongoRepos(uri) {
   const client = new MongoClient(uri);
-  await client.connect();
+  try { await client.connect(); } catch (e) {
+    // Lỗi SSL "alert number 80" thường là do Atlas chưa cho phép IP của server (Network Access)
+    console.error('Không kết nối được MongoDB:', e.message,
+      '\n-> Kiểm tra MongoDB Atlas > Network Access đã thêm 0.0.0.0/0 (hoặc IP của server) và MONGODB_URI đúng.');
+    throw e;
+  }
   const db = client.db(process.env.MONGODB_DB || 'music');
   // Dùng field `id` (UUID string) thay _id để API giống hệt bản JSON
   const strip = (d) => { if (d) delete d._id; return d; };

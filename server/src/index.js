@@ -18,6 +18,12 @@ const pick = (o, keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefin
 
 // ---- Auth ----
 app.get('/api/auth', (req, res) => res.json({ required: authEnabled }));
+// Phiên bản giao diện = thời điểm build web/dist/index.html; client so sánh để tự tải lại khi có bản deploy mới
+app.get('/api/version', (req, res) => {
+  let v = 'dev';
+  try { v = String(fs.statSync(path.resolve('../web/dist/index.html')).mtimeMs); } catch {}
+  res.set('Cache-Control', 'no-store').json({ v });
+});
 app.post('/api/login', (req, res) => {
   const token = login(req.body.password);
   token ? res.json({ token }) : res.status(401).json({ error: 'Sai mật khẩu' });

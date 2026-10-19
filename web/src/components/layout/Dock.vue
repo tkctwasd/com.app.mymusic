@@ -50,7 +50,7 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
       <template v-else-if="ui.isMobile">
         <div class="m-main" :style="{ transform: dx ? `translateX(${dx * 0.4}px)` : '', transition: dx ? 'none' : '' }"
           @click="ui.openStage()" @touchstart.passive="tStart" @touchmove.passive="tMove" @touchend="tEnd">
-          <Cover :src="t.coverUrl" :size="96" class="cv" />
+          <Cover :src="t.coverUrl" :size="192" class="cv disc" :class="{ rolling: player.playing }" />
           <div class="meta"><div class="title ellipsis">{{ t.title }}</div><div class="artist ellipsis">{{ t.artist }}</div></div>
         </div>
         <button class="icon-btn" :class="{ liked: t.liked }" :aria-label="t.liked ? 'Bỏ thích' : 'Thích'" @click="lib.toggleLike(t)"><Icon :name="t.liked ? 'heartFill' : 'heart'" size="22" /></button>
@@ -60,7 +60,7 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
 
       <!-- Desktop -->
       <template v-else>
-        <button class="cv-btn" title="Mở màn hình đang phát" @click="ui.openStage()"><Cover :src="t.coverUrl" :size="112" class="cv" /></button>
+        <button class="cv-btn" title="Mở màn hình đang phát" @click="ui.openStage()"><Cover :src="t.coverUrl" :size="192" class="cv disc" :class="{ rolling: player.playing }" /></button>
         <div class="meta">
           <button class="title ellipsis" @click="ui.openStage()">{{ t.title }}</button>
           <RouterLink :to="`/artist/${encodeURIComponent(t.artist)}`" class="artist ellipsis link">{{ t.artist }}</RouterLink>
@@ -97,8 +97,8 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
   border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
 .dock.empty { justify-content: center; gap: 14px; width: auto; padding: 0 12px 0 22px; }
 .hint { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
-.cv-btn { flex-shrink: 0; border-radius: 14px; transition: transform .25s var(--spring); }
-.cv-btn:hover { transform: scale(1.05) rotate(-2deg); }
+.cv-btn { flex-shrink: 0; border-radius: 50%; }
+.cv-btn:hover .disc { box-shadow: 0 0 0 2px var(--accent), 0 6px 16px -6px rgb(0 0 0 / .5); }
 .cv { width: 52px; --cover-r: 14px; }
 .meta { display: flex; flex-direction: column; min-width: 0; width: 170px; flex-shrink: 1; }
 .title { font-weight: 600; text-align: left; }
@@ -116,6 +116,15 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
 .vol:hover .vol-pop, .vol:focus-within .vol-pop { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
 .vol-pop::after { content: ''; position: absolute; top: 100%; left: 0; right: 0; height: 16px; }
 .sleep { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 13px; background: var(--accent-soft); color: var(--accent); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; flex-shrink: 0; }
+.disc { border-radius: 50% !important; --cover-r: 50%; animation: disc 9s linear infinite paused;
+  /* Giữ nét khi xoay: lớp GPU riêng, ảnh gốc 2x độ phân giải hiển thị */
+  will-change: transform; backface-visibility: hidden; transform: translateZ(0);
+  box-shadow: 0 0 0 2px var(--line-2), 0 6px 16px -6px rgb(0 0 0 / .5); }
+.disc.rolling { animation-play-state: running; }
+/* Lỗ giữa đĩa than */
+.disc::after { content: ''; position: absolute; inset: 40%; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 3px rgb(0 0 0 / .35); }
+@keyframes disc { from { transform: translateZ(0) rotate(0); } to { transform: translateZ(0) rotate(360deg); } }
+.cv-btn:hover .disc.rolling { animation-play-state: paused; }
 .spin { width: 18px; height: 18px; border: 2px solid color-mix(in oklab, var(--bg) 40%, transparent); border-top-color: var(--bg); border-radius: 50%; animation: spin .8s linear infinite; }
 @media (max-width: 1000px) { .meta { width: 120px; } .time { display: none; } }
 
