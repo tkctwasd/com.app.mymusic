@@ -129,7 +129,7 @@ function wheelVol(e) { e.preventDefault(); player.setVolume(player.volume + (e.d
 @media (max-width: 1000px) { .meta { width: 120px; } .time { display: none; } }
 
 /* Mobile */
-.dock.mobile { bottom: calc(var(--mnav-h) + env(safe-area-inset-bottom) + 8px); width: calc(100% - 16px); height: 64px; padding: 0 8px 0 8px; gap: 4px; border-radius: 22px; overflow: hidden; }
+.dock.mobile { bottom: calc(var(--mnav-h) + var(--mnav-pad) + 8px); width: calc(100% - 16px); height: 64px; padding: 0 8px 0 8px; gap: 4px; border-radius: 22px; overflow: hidden; }
 .dock.mobile.empty { display: none; }
 .m-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; transition: transform .25s var(--ease); }
 .mobile .cv { width: 46px; --cover-r: 12px; }

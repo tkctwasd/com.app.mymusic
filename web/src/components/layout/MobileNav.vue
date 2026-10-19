@@ -15,8 +15,10 @@ const cur = computed(() => (route.name === 'listen' ? 0 : route.name === 'explor
 </template>
 
 <style scoped>
-.mnav { position: fixed; z-index: 200; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; height: calc(var(--mnav-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
-  background: var(--glass); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border-top: 1px solid var(--line); }
+:global(:root) { --mnav-pad: max(4px, calc(env(safe-area-inset-bottom) - 18px)); --mnav-bg: color-mix(in srgb, var(--surface) 92%, var(--bg)); }
+.mnav { position: fixed; z-index: 200; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; height: calc(var(--mnav-h) + var(--mnav-pad)); padding-bottom: var(--mnav-pad);
+  background: var(--mnav-bg); border-top: 1px solid var(--line); }
+.mnav::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: var(--mnav-bg); } /* phủ nốt phần dưới nếu iOS báo viewport hụt */
 .it { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; flex: 1; font-size: 11px; font-weight: 500; color: var(--text-3); transition: color .2s; }
 .it.on { color: var(--text); }
 .it.on :deep(svg) { color: var(--accent); }
