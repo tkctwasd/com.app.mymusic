@@ -71,12 +71,13 @@ function onPaste(e) {
 let innerDrag = false; // kéo bắt đầu trong trang (thẻ, bài hát) thì bỏ qua
 const onDragStart = () => { innerDrag = true; };
 const onDragEnd = () => { innerDrag = false; };
-const isLinkDrag = (e) => !innerDrag && [...(e.dataTransfer?.types || [])].includes('text/uri-list');
+const isLinkDrag = (e) => !innerDrag && ['text/uri-list', 'Files'].some((t) => [...(e.dataTransfer?.types || [])].includes(t));
 function onDragOver(e) { if (state.value === 'ready' && isLinkDrag(e)) { e.preventDefault(); dropping.value = true; } }
 function onDrop(e) {
   innerDrag = false;
   if (!dropping.value) return;
   dropping.value = false;
+  if (e.dataTransfer.files?.length) { e.preventDefault(); return lib.uploadFiles(e.dataTransfer.files); }
   const m = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text') || '').match(YT);
   if (m) { e.preventDefault(); ui.openCmd(m[0]); } else ui.toast('Chỉ nhận link YouTube');
 }
@@ -131,7 +132,7 @@ watch(() => route.fullPath, () => { ui.scrollY = 0; main.value?.scrollTo(0, 0); 
     <ContextMenu />
     <Toasts />
     <InstallHint />
-    <div v-if="dropping" class="drop-hint" @dragleave.self="dropping = false"><div><Icon name="youtube" size="40" /><b>Thả link YouTube để tải về</b></div></div>
+    <div v-if="dropping" class="drop-hint" @dragleave.self="dropping = false"><div><Icon name="youtube" size="40" /><b>Thả link YouTube hoặc file nhạc vào đây</b></div></div>
   </template>
 </template>
 

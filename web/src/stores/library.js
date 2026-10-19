@@ -123,6 +123,25 @@ export const useLibrary = defineStore('library', {
       for (const j of jobs) this.onJob(j);
       useUi().jobsOpen = true;
     },
+    // Tải file nhạc từ máy/điện thoại lên (mp3, m4a, wav, flac, video...) -> server chuyển đổi như bài YouTube
+    async uploadFiles(files, playlistId) {
+      const ui = useUi();
+      const list = [...files].filter((f) => /^(audio|video)\//.test(f.type) || /\.(mp3|m4a|aac|wav|flac|ogg|opus|wma|mp4|webm|mkv)$/i.test(f.name));
+      if (!list.length) return ui.toast('Chỉ nhận file nhạc hoặc video');
+      ui.jobsOpen = true;
+      for (const f of list) {
+        try {
+          const q = new URLSearchParams({ name: f.name, ...(playlistId ? { playlistId } : {}) });
+          this.onJob(await api(`/api/upload?${q}`, { method: 'POST', body: f, raw: true }));
+        } catch (e) { ui.toast(`Không tải lên được "${f.name}": ${e.message}`); }
+      }
+    },
+    // Mở hộp chọn file của máy (iPhone: chọn từ Tệp / iCloud Drive)
+    pickUpload(playlistId) {
+      const inp = Object.assign(document.createElement('input'), { type: 'file', multiple: true, accept: 'audio/*,video/*,.mp3,.m4a,.flac,.wav,.ogg,.opus' });
+      inp.onchange = () => inp.files.length && this.uploadFiles(inp.files, playlistId);
+      inp.click();
+    },
     onJob(j) {
       const i = this.jobs.findIndex((x) => x.id === j.id);
       const prev = this.jobs[i];

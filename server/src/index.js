@@ -106,6 +106,15 @@ app.post('/api/import', (req, res) => {
   if (!items.length || items.some((i) => !YT_RE.test(i.url || ''))) return res.status(400).json({ error: 'URL YouTube không hợp lệ' });
   res.json(items.map((i) => addJob({ url: i.url, title: i.title, meta: pick(i, ['title', 'artist', 'album']), playlistId: req.body.playlistId })));
 });
+// Tải file nhạc lên trực tiếp (không cần YouTube): body = file thô, ?name=tên-file&playlistId=
+app.post('/api/upload', express.raw({ type: () => true, limit: '200mb' }), (req, res) => {
+  if (!req.body?.length) return res.status(400).json({ error: 'Thiếu file' });
+  const name = path.basename(String(req.query.name || 'audio')).slice(0, 200);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'up-'));
+  const file = path.join(dir, `src${path.extname(name).slice(0, 8)}`);
+  fs.writeFileSync(file, req.body);
+  res.json(addJob({ url: `file:${name}`, title: name, file, playlistId: req.query.playlistId || null }));
+});
 app.get('/api/import/jobs', (req, res) => res.json(listJobs()));
 app.get('/api/import/events', (req, res) => subscribe(res));
 app.post('/api/import/jobs/:id/retry', (req, res) => { const j = retryJob(req.params.id); j ? res.json(j) : res.sendStatus(404); });

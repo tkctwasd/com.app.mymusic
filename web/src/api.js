@@ -7,7 +7,7 @@ export const auth = {
 export async function api(url, { method = 'GET', body, raw } = {}) {
   const headers = { Authorization: `Bearer ${auth.token}` };
   if (body && !raw) headers['Content-Type'] = 'application/json';
-  if (raw) headers['Content-Type'] = body.type || 'image/jpeg';
+  if (raw) headers['Content-Type'] = body.type || 'application/octet-stream';
   const r = await fetch(url, { method, headers, body: raw ? body : body && JSON.stringify(body) });
   if (r.status === 401 && !url.endsWith('/login')) window.dispatchEvent(new Event('unauthorized'));
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);

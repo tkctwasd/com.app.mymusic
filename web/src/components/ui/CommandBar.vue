@@ -132,6 +132,7 @@ const sections = computed(() => {
       })) },
       { title: 'Gợi ý', items: [
         { icon: 'youtube', title: 'Thêm nhạc từ YouTube', sub: 'Dán link video hoặc playlist vào ô trên', run: async () => { try { q.value = (await navigator.clipboard.readText()).trim(); } catch {} return 'keep'; } },
+        { icon: 'upload', title: 'Tải file nhạc lên', sub: 'mp3, m4a, flac, wav… từ máy hoặc điện thoại', run: () => lib.pickUpload() },
         { icon: 'shuffle', title: 'Phát ngẫu nhiên cả thư viện', run: commands.find((c) => c.label === 'phát ngẫu nhiên thư viện').run },
         { icon: 'moon', title: 'Hẹn giờ ngủ 30 phút', run: () => commands[0].run('30') },
         { icon: 'terminal', title: 'Xem tất cả lệnh', sub: 'Gõ > để bắt đầu', run: () => { q.value = '>'; return 'keep'; } },

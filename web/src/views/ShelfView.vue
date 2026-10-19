@@ -77,6 +77,7 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
       <h1 class="display">Kệ nhạc</h1>
       <div class="actions">
         <button class="btn btn-soft" @click="newPlaylist"><Icon name="plus" size="16" /> Playlist mới</button>
+        <button class="btn btn-soft up" title="Tải file nhạc lên" @click="lib.pickUpload()"><Icon name="upload" size="16" /><span>Tải file</span></button>
         <button class="btn btn-primary" @click="ui.openCmd('')"><Icon name="youtube" size="16" /> Thêm nhạc</button>
       </div>
     </header>
@@ -179,7 +180,9 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
 .empty-card { margin-top: 24px; padding: 28px; border-radius: var(--r-xl); background: var(--hover); border: 1px dashed var(--line-2); text-align: center; }
 .empty-card p { margin: 6px 0 16px; }
 @media (max-width: 767px) {
-  .actions .btn-soft { display: none; }
+  .actions .btn-soft:not(.up) { display: none; }
+  .up span { display: none; }
+  .up { width: 38px; padding: 0; }
   .tabs { width: 100%; }
   .tabs button { flex: 1; min-width: 0; padding: 0 4px; }
   .tools { width: 100%; min-width: 0; }
