@@ -19,6 +19,7 @@ import SettingsModal from './components/modals/SettingsModal.vue';
 import LoginView from './views/LoginView.vue';
 import Icon from './components/ui/Icon.vue';
 import AppLogo from './components/ui/AppLogo.vue';
+import InstallHint from './components/ui/InstallHint.vue';
 import { api, auth } from './api.js';
 import { useLibrary } from './stores/library.js';
 import { usePlayer } from './stores/player.js';
@@ -129,6 +130,7 @@ watch(() => route.fullPath, () => { ui.scrollY = 0; main.value?.scrollTo(0, 0); 
     <JobsPanel />
     <ContextMenu />
     <Toasts />
+    <InstallHint />
     <div v-if="dropping" class="drop-hint" @dragleave.self="dropping = false"><div><Icon name="youtube" size="40" /><b>Thả link YouTube để tải về</b></div></div>
   </template>
 </template>
