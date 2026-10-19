@@ -1,74 +1,81 @@
 <script setup>
 import { ref, computed } from 'vue';
 import Icon from '../components/ui/Icon.vue';
+import Cover from '../components/ui/Cover.vue';
 import PlayButton from '../components/media/PlayButton.vue';
-import TrackTable from '../components/media/TrackTable.vue';
+import TrackList from '../components/media/TrackList.vue';
 import Card from '../components/media/Card.vue';
-import CardRow from '../components/media/CardRow.vue';
+import Shelf from '../components/media/Shelf.vue';
 import { useLibrary } from '../stores/library.js';
 import { usePlayer } from '../stores/player.js';
-import { usePage } from '../composables/usePage.js';
 import { useDominantColor } from '../composables/useDominantColor.js';
-import { img } from '../utils.js';
+import { img, fmtTotal } from '../utils.js';
 
 const props = defineProps({ name: String });
 const lib = useLibrary(), player = usePlayer();
 const artist = computed(() => lib.artists.find((a) => a.name === props.name));
 const popular = computed(() => [...(artist.value?.tracks || [])].sort((a, b) => (b.playCount || 0) - (a.playCount || 0)));
 const albums = computed(() => lib.albums.filter((a) => a.artist === props.name));
+const total = computed(() => popular.value.reduce((s, t) => s + (t.duration || 0), 0));
 const showAll = ref(false);
 const path = computed(() => `/artist/${encodeURIComponent(props.name)}`);
 const ctx = computed(() => ({ name: props.name, path: path.value }));
 const color = useDominantColor(() => artist.value?.coverUrl, () => props.name);
 const playing = computed(() => player.context?.path === path.value && player.playing);
 const play = () => player.toggleContext(popular.value, ctx.value);
-usePage(() => ({ color: color.value, title: props.name, play, playing: playing.value }));
+function shufflePlay() {
+  if (player.shuffle) return player.toggleShuffle();
+  player.toggleShuffle();
+  player.playTracks(popular.value, Math.floor(Math.random() * popular.value.length), ctx.value);
+}
+const albumPath = (a) => `/album/${encodeURIComponent(a.artist)}/${encodeURIComponent(a.name)}`;
 </script>
 
 <template>
-  <div v-if="!artist" class="page"><p class="muted" style="padding-top: 80px">Không có bài nào của nghệ sĩ này.</p></div>
+  <div v-if="!artist" class="page"><p class="muted" style="padding-top: 40px">Không có bài nào của nghệ sĩ này.</p></div>
   <div v-else class="artist" :style="{ '--c': color }">
-    <header class="banner">
-      <div class="bg" :style="{ backgroundImage: artist.coverUrl ? `url(${img(artist.coverUrl, 800)})` : '' }" />
-      <div class="txt">
-        <span class="verified"><Icon name="checkCircle" size="22" class="v" /> Nghệ sĩ trong thư viện</span>
-        <h1>{{ name }}</h1>
-        <p>{{ artist.tracks.length }} bài hát · {{ artist.plays }} lượt nghe</p>
-      </div>
-    </header>
-    <div class="body">
-      <div class="actions">
-        <PlayButton :size="56" :playing="playing" @click="play" />
-        <button class="icon-btn big" :class="{ on: player.shuffle }" title="Phát ngẫu nhiên" @click="player.shuffle || player.toggleShuffle(); player.playTracks(popular, Math.floor(Math.random() * popular.length), ctx)"><Icon name="shuffle" size="28" /></button>
-      </div>
-      <h2 class="h">Phổ biến</h2>
-      <TrackTable :tracks="showAll ? popular : popular.slice(0, 5)" :context="ctx" :show-header="false" :show-added="false" />
-      <button v-if="popular.length > 5" class="more" @click="showAll = !showAll">{{ showAll ? 'Ẩn bớt' : 'Xem thêm' }}</button>
-      <div v-if="albums.length" class="page">
-        <CardRow title="Album">
-          <Card v-for="a in albums" :key="a.name" :to="`/album/${encodeURIComponent(a.artist)}/${encodeURIComponent(a.name)}`" :title="a.name" :sub="`Album · ${a.tracks.length} bài`" :cover="a.coverUrl"
-            :playing="player.context?.path === `/album/${encodeURIComponent(a.artist)}/${encodeURIComponent(a.name)}` && player.playing"
-            @play="player.toggleContext(a.tracks, { name: a.name, path: `/album/${encodeURIComponent(a.artist)}/${encodeURIComponent(a.name)}` })" />
-        </CardRow>
-      </div>
+    <div class="banner"><div class="bg" :style="{ backgroundImage: artist.coverUrl ? `url(${img(artist.coverUrl, 600)})` : '' }" /></div>
+    <div class="page">
+      <header class="hd">
+        <Cover :src="artist.coverUrl" :size="400" round icon="artist" class="av" />
+        <div class="info">
+          <span class="type"><Icon name="artist" size="14" /> Nghệ sĩ trong thư viện</span>
+          <h1 class="display">{{ name }}</h1>
+          <p class="muted">{{ artist.tracks.length }} bài · {{ fmtTotal(total) }} · {{ artist.plays }} lượt nghe</p>
+          <div class="acts">
+            <PlayButton :size="60" :playing="playing" @click="play" />
+            <button class="round-btn" :class="{ on: player.shuffle }" title="Phát ngẫu nhiên" @click="shufflePlay"><Icon name="shuffle" size="20" /></button>
+          </div>
+        </div>
+      </header>
+
+      <div class="section-title"><h2>Phổ biến</h2><button v-if="popular.length > 5" @click="showAll = !showAll">{{ showAll ? 'Thu gọn' : `Xem cả ${popular.length} bài` }}</button></div>
+      <TrackList :tracks="showAll ? popular : popular.slice(0, 5)" :context="ctx" />
+
+      <Shelf v-if="albums.length" title="Album">
+        <Card v-for="a in albums" :key="a.name" :to="albumPath(a)" :title="a.name" :sub="`${a.tracks.length} bài`" :cover="a.coverUrl" vinyl
+          :playing="player.context?.path === albumPath(a) && player.playing" :active="player.context?.path === albumPath(a)"
+          @play="player.toggleContext(a.tracks, { name: a.name, path: albumPath(a) })" />
+      </Shelf>
     </div>
   </div>
 </template>
 
 <style scoped>
-.banner { position: relative; height: clamp(280px, 40vh, 400px); display: flex; align-items: flex-end; overflow: hidden; background: var(--c); }
-.bg { position: absolute; inset: 0; background-size: cover; background-position: center 30%; }
-.bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(0,0,0,.6)); }
-.txt { position: relative; padding: 24px; }
-.verified { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.v { color: #4cb3ff; }
-h1 { font-size: clamp(40px, 7vw, 96px); font-weight: 900; letter-spacing: -.04em; line-height: 1.05; margin: 8px 0; }
-.txt p { margin: 0; }
-.body { background: linear-gradient(color-mix(in srgb, var(--c) 40%, #121212), var(--surface) 240px); padding-bottom: 32px; }
-.actions { display: flex; align-items: center; gap: 24px; padding: 24px; }
-.icon-btn.big { width: 40px; height: 40px; }
-.h { font-size: 24px; font-weight: 800; padding: 0 24px 16px; }
-.more { margin: 16px 40px 0; font-weight: 700; color: var(--text-2); font-size: 14px; }
-.more:hover { color: #fff; }
-@media (max-width: 767px) { .h { padding: 0 16px 8px; } .actions { padding: 16px; } }
+.artist { position: relative; min-height: 100%; }
+.banner { position: absolute; top: calc(-1 * var(--nav-h)); left: 0; right: 0; height: 420px; overflow: hidden; pointer-events: none; }
+.bg { position: absolute; inset: -60px; background-color: var(--c); background-size: cover; background-position: center; filter: blur(60px) saturate(1.4); opacity: .55; }
+.banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent, var(--bg)); }
+.page { position: relative; }
+.hd { display: flex; align-items: flex-end; gap: 32px; padding: 32px 0 8px; }
+.av { width: clamp(150px, 17vw, 210px); box-shadow: 0 24px 60px -20px rgb(0 0 0 / .55); }
+.info { min-width: 0; }
+.type { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--hover); border: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+h1 { font-size: clamp(32px, 5vw, 56px); font-weight: 600; line-height: 1.1; margin: 10px 0 6px; overflow-wrap: anywhere; }
+.info p { margin: 0; }
+.acts { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.round-btn { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--hover); border: 1px solid var(--line); color: var(--text-2); }
+.round-btn:hover { background: var(--press); color: var(--text); }
+.round-btn.on { color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 767px) { .hd { flex-direction: column; align-items: center; text-align: center; gap: 16px; } .acts { justify-content: center; } }
 </style>

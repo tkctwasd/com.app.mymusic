@@ -21,7 +21,7 @@ async function save() {
       <div><label class="lbl">Tên</label><input v-model="f.name" class="field" maxlength="100" autofocus required /></div>
       <div><label class="lbl">Mô tả</label><textarea v-model="f.description" class="field" rows="4" maxlength="300" placeholder="Thêm phần mô tả (không bắt buộc)" /></div>
     </form>
-    <template #footer><button class="btn btn-light" @click="save">Lưu</button></template>
+    <template #footer><button class="btn btn-primary" @click="save">Lưu</button></template>
   </Modal>
 </template>
 

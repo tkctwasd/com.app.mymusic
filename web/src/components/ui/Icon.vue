@@ -1,5 +1,5 @@
 <script setup>
-// Bộ icon SVG inline. f: = icon tô đặc, còn lại là nét (stroke) kiểu Lucide.
+// Bộ icon SVG inline. f: = icon tô đặc, còn lại là nét (stroke 1.75) kiểu Lucide.
 defineProps({ name: String, size: { type: [Number, String], default: 20 } });
 
 const I = {
@@ -52,6 +52,22 @@ const I = {
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
   sort: 'M3 6h18M6 12h12M10 18h4',
+  grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  list: 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01',
+  sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4',
+  monitor: 'M3 4h18v12H3zM8 20h8M12 16v4',
+  chevronUp: 'm18 15-6-6-6 6',
+  listen: 'M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3',
+  shelf: 'M4 3v18M9 3v18M14 4l5 16M3 21h18',
+  compass: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM16.2 7.8l-2.1 6.3-6.3 2.1 2.1-6.3z',
+  command: 'M9 6v12M15 6v12M6 9h12M6 15h12M9 6a3 3 0 1 0-3 3M15 6a3 3 0 1 1 3 3M9 18a3 3 0 1 1-3-3M15 18a3 3 0 1 0 3-3',
+  terminal: 'm4 17 6-6-6-6M12 19h8',
+  present: 'M2 4h20v13H2zM8 21h8M12 17v4M10 8.5v5l4-2.5z',
+  info: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 16v-4M12 8h.01',
+  select: 'M4 4h6v6H4zM14 6h7M14 9h4M4 14h6v6H4zM14 16h7M14 19h4',
+  sparkle: 'M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z',
+  link: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7',
+  enter: 'M9 10l-5 5 5 5M20 4v7a4 4 0 0 1-4 4H4',
 };
 </script>
 
@@ -59,7 +75,7 @@ const I = {
   <svg :width="size" :height="size" viewBox="0 0 24 24" aria-hidden="true" class="icon"
     :fill="I[name]?.startsWith('f:') ? 'currentColor' : 'none'"
     :stroke="I[name]?.startsWith('f:') ? 'none' : 'currentColor'"
-    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
     <path :d="I[name]?.replace(/^f:/, '')" />
   </svg>
 </template>

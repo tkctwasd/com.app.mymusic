@@ -28,7 +28,13 @@ app.use('/api', requireAuth);
 app.get('/api/tracks', wrap(async (req, res) => res.json(await Tracks.all())));
 
 app.patch('/api/tracks/:id', wrap(async (req, res) => {
-  const t = await Tracks.update(req.params.id, pick(req.body, ['title', 'artist', 'album', 'coverUrl', 'liked', 'color']));
+  const patch = pick(req.body, ['title', 'artist', 'album', 'coverUrl', 'liked', 'color', 'peaks']);
+  // peaks: dạng sóng âm (tối đa 300 giá trị 0–1) do trình duyệt tính rồi gửi lên
+  if ('peaks' in patch) {
+    if (!Array.isArray(patch.peaks) || patch.peaks.length > 300) return res.status(400).json({ error: 'peaks không hợp lệ' });
+    patch.peaks = patch.peaks.map((v) => Math.max(0, Math.min(1, Math.round((+v || 0) * 100) / 100)));
+  }
+  const t = await Tracks.update(req.params.id, patch);
   t ? res.json(t) : res.sendStatus(404);
 }));
 

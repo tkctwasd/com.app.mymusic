@@ -1,19 +1,51 @@
+/* Design tokens v2 "Studio". Các màu chính được useTheme.js tính lại theo ảnh bìa bài đang phát.
+   Đăng ký @property để trình duyệt chuyển màu mượt khi đổi bài. */
+@property --bg { syntax: '<color>'; inherits: true; initial-value: #10121a; }
+@property --bg-2 { syntax: '<color>'; inherits: true; initial-value: #151826; }
+@property --surface { syntax: '<color>'; inherits: true; initial-value: #1a1d2b; }
+@property --surface-2 { syntax: '<color>'; inherits: true; initial-value: #222638; }
+@property --surface-3 { syntax: '<color>'; inherits: true; initial-value: #2b3046; }
+@property --text { syntax: '<color>'; inherits: true; initial-value: #eef0f8; }
+@property --text-2 { syntax: '<color>'; inherits: true; initial-value: #aeb3c7; }
+@property --text-3 { syntax: '<color>'; inherits: true; initial-value: #7c8198; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: #9fb3ff; }
+@property --accent-ink { syntax: '<color>'; inherits: true; initial-value: #10152e; }
+@property --tint { syntax: '<color>'; inherits: true; initial-value: #5a6bc4; }
+
 :root {
-  --bg: #000;
-  --surface: #121212;
-  --surface-2: #1f1f1f;
-  --surface-3: #2a2a2a;
-  --surface-4: #3e3e3e;
-  --text: #fff;
-  --text-2: #b3b3b3;
-  --text-3: #7a7a7a;
-  --accent: #1ed760;
-  --accent-hover: #3be477;
-  --danger: #f15e6c;
-  --radius: 8px;
-  --gap: 8px;
-  --player-h: 80px;
+  --line: color-mix(in oklab, var(--text) 10%, transparent);
+  --line-2: color-mix(in oklab, var(--text) 16%, transparent);
+  --hover: color-mix(in oklab, var(--text) 6%, transparent);
+  --press: color-mix(in oklab, var(--text) 10%, transparent);
+  --glass: color-mix(in oklab, var(--surface) 70%, transparent);
+  --glass-strong: color-mix(in oklab, var(--surface) 86%, transparent);
+  --accent-soft: color-mix(in oklab, var(--accent) 16%, transparent);
+  --danger: #ef6b73;
+  --shadow: 0 10px 40px -12px rgb(0 0 0 / .45);
+  --shadow-lg: 0 24px 80px -20px rgb(0 0 0 / .55);
+
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --nav-h: 64px;
+  --dock-h: 72px;
+  --mnav-h: 64px;
+  --content-w: 1200px;
+
   --font: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --ease: cubic-bezier(.3, 0, .4, 1);
+  --font-display: 'Unbounded', 'Be Vietnam Pro', system-ui, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --spring: cubic-bezier(.34, 1.4, .64, 1);
+  --theme-t: .6s;
+
   color-scheme: dark;
+  transition: --bg var(--theme-t), --bg-2 var(--theme-t), --surface var(--theme-t), --surface-2 var(--theme-t), --surface-3 var(--theme-t),
+    --text var(--theme-t), --text-2 var(--theme-t), --text-3 var(--theme-t), --accent var(--theme-t), --accent-ink var(--theme-t), --tint var(--theme-t);
+}
+:root[data-mode='light'] { color-scheme: light; --shadow: 0 10px 40px -14px rgb(30 30 60 / .22); --shadow-lg: 0 24px 80px -24px rgb(30 30 60 / .3); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --theme-t: 0s; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

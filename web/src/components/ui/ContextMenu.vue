@@ -60,11 +60,12 @@ function onDown(e) { if (ui.menu && !e.target.closest('.ctx')) close(); }
 </template>
 
 <style scoped>
-.ctx { position: fixed; z-index: 1000; min-width: 200px; max-width: 280px; margin: 0; padding: 4px; list-style: none; background: #282828; border-radius: 4px; box-shadow: 0 16px 24px rgba(0,0,0,.3), 0 6px 8px rgba(0,0,0,.2); }
+.ctx { position: fixed; z-index: 1000; min-width: 200px; max-width: 280px; margin: 0; padding: 6px; list-style: none; background: var(--glass-strong); backdrop-filter: blur(20px) saturate(1.4); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-lg); animation: pop .18s var(--ease); }
+@keyframes pop { from { opacity: 0; transform: scale(.97); } }
 .sub { width: 220px; max-height: 360px; }
-li { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 2px; cursor: pointer; color: #e5e5e5; font-size: 14px; }
-li:hover { background: #3e3e3e; color: #fff; }
+li { display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; cursor: pointer; color: var(--text-2); font-size: 14px; }
+li:hover { background: var(--hover); color: var(--text); }
 li.danger:hover { color: var(--danger); }
 li .arrow { margin-left: auto; }
-li.sep { height: 1px; padding: 0; margin: 4px 0; background: #3e3e3e; pointer-events: none; }
+li.sep { height: 1px; padding: 0; margin: 4px 6px; background: var(--line); pointer-events: none; }
 </style>

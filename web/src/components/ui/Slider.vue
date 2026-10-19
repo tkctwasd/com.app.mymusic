@@ -1,5 +1,5 @@
 <script setup>
-// Thanh trượt kiểu Spotify: hover -> xanh + hiện núm; kéo bằng pointer (chuột/cảm ứng); cuộn chuột nếu wheelStep.
+// Thanh trượt: hover -> màu nhấn + hiện núm; kéo bằng pointer (chuột/cảm ứng); cuộn chuột nếu wheelStep.
 import { ref, computed } from 'vue';
 
 const props = defineProps({ value: Number, max: { type: Number, default: 1 }, wheelStep: Number, label: String });
@@ -45,9 +45,9 @@ defineExpose({ dragging });
 
 <style scoped>
 .slider { position: relative; height: 16px; display: flex; align-items: center; cursor: pointer; touch-action: none; flex: 1; outline: none; }
-.track { height: 4px; width: 100%; border-radius: 2px; background: rgba(255,255,255,.3); overflow: hidden; }
-.fill { height: 100%; background: #fff; border-radius: 2px; }
-.knob { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #fff; transform: translateX(-50%); opacity: 0; box-shadow: 0 2px 4px rgba(0,0,0,.5); pointer-events: none; }
+.track { height: 4px; width: 100%; border-radius: 2px; background: var(--line-2); overflow: hidden; }
+.fill { height: 100%; background: var(--text); border-radius: 2px; transition: background .2s; }
+.knob { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--text); transform: translateX(-50%); opacity: 0; box-shadow: 0 2px 6px rgb(0 0 0 / .3); transition: opacity .2s; pointer-events: none; }
 .slider:hover .fill, .slider.active .fill, .slider:focus-visible .fill { background: var(--accent); }
 .slider:hover .knob, .slider.active .knob, .slider:focus-visible .knob { opacity: 1; }
 </style>

@@ -1,10 +1,12 @@
-// Lấy màu chủ đạo của ảnh bìa (canvas thu nhỏ 24x24), làm tối bớt để chữ trắng dễ đọc. Có cache.
+// Lấy màu chủ đạo của ảnh bìa (canvas thu nhỏ 24x24). Có cache.
+// extractRgb trả [r,g,b] gốc (dùng cho theme); useDominantColor trả chuỗi màu đã làm tối (dùng cho nền header).
 import { ref, watch, toValue } from 'vue';
 import { img, hashColor } from '../utils.js';
 
 const cache = new Map();
 
-function extract(url) {
+export function extractRgb(url) {
+  if (!url) return Promise.resolve(null);
   if (cache.has(url)) return cache.get(url);
   const p = new Promise((resolve) => {
     const im = new Image();
@@ -26,11 +28,7 @@ function extract(url) {
           const wt = 0.15 + sat * sat;
           r += R * wt; g += G * wt; b += B * wt; w += wt;
         }
-        if (!w) return resolve(null);
-        let [R, G, B] = [r / w, g / w, b / w];
-        const L = 0.2126 * R + 0.7152 * G + 0.0722 * B;
-        const k = L > 110 ? 110 / L : 1; // giới hạn độ sáng
-        resolve(`rgb(${Math.round(R * k)} ${Math.round(G * k)} ${Math.round(B * k)})`);
+        resolve(w ? [r / w, g / w, b / w] : null);
       } catch { resolve(null); }
     };
     im.onerror = () => resolve(null);
@@ -45,8 +43,12 @@ export function useDominantColor(urlSrc, fallbackKey) {
   watch(() => [toValue(urlSrc), toValue(fallbackKey)], async ([url, key]) => {
     color.value = hashColor(key || '');
     if (!url) return;
-    const c = await extract(url);
-    if (c && toValue(urlSrc) === url) color.value = c;
+    const rgb = await extractRgb(url);
+    if (!rgb || toValue(urlSrc) !== url) return;
+    const [R, G, B] = rgb;
+    const L = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+    const k = L > 110 ? 110 / L : 1; // giới hạn độ sáng
+    color.value = `rgb(${Math.round(R * k)} ${Math.round(G * k)} ${Math.round(B * k)})`;
   }, { immediate: true });
   return color;
 }

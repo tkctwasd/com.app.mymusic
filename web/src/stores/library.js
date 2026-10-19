@@ -78,6 +78,18 @@ export const useLibrary = defineStore('library', {
       useUi().toast(`Đã xóa "${t.title}"`, { label: 'Hoàn tác', fn: () => { clearTimeout(timer); this.tracks.splice(idx, 0, t); } });
     },
 
+    // Xóa nhiều bài (chọn nhiều), một nút Hoàn tác chung
+    deleteTracks(ts) {
+      const before = [...this.tracks];
+      const ids = new Set(ts.map((t) => t.id));
+      this.tracks = this.tracks.filter((t) => !ids.has(t.id));
+      const timer = setTimeout(async () => {
+        for (const id of ids) await api(`/api/tracks/${id}`, { method: 'DELETE' }).catch((e) => useUi().toast(e.message));
+        for (const p of this.playlists) p.trackIds = p.trackIds.filter((x) => !ids.has(x));
+      }, 5000);
+      useUi().toast(`Đã xóa ${ids.size} bài`, { label: 'Hoàn tác', fn: () => { clearTimeout(timer); this.tracks = before; } });
+    },
+
     // ---- Playlists ----
     async createPlaylist(name, trackIds = []) {
       const p = await api('/api/playlists', { method: 'POST', body: { name: name || `Playlist của tôi #${this.playlists.length + 1}`, trackIds } });
@@ -92,7 +104,7 @@ export const useLibrary = defineStore('library', {
       await this.updatePlaylist(p, { trackIds: [...p.trackIds, ...add] });
       useUi().toast(`Đã thêm vào ${p.name}`);
     },
-    async removeFromPlaylist(p, id) { await this.updatePlaylist(p, { trackIds: p.trackIds.filter((x) => x !== id) }); },
+    async removeFromPlaylist(p, ids) { ids = [].concat(ids); await this.updatePlaylist(p, { trackIds: p.trackIds.filter((x) => !ids.includes(x)) }); },
     async moveInPlaylist(p, from, to) {
       const ids = [...p.trackIds];
       ids.splice(to, 0, ids.splice(from, 1)[0]);
@@ -121,6 +133,7 @@ export const useLibrary = defineStore('library', {
       const ui = useUi();
       await this.load();
       const t = this.byId[j.trackId];
+      ui.pulse = Date.now();
       if (t) ui.toast(`Đã thêm "${t.title}" vào thư viện`, { label: 'Phát', fn: () => import('./player.js').then(({ usePlayer }) => usePlayer().playTracks([t], 0)) });
     },
     listenJobs(token) {

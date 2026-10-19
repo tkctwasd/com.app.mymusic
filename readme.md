@@ -1,6 +1,6 @@
-# My Music – Ứng dụng nghe nhạc cá nhân (phong cách Spotify)
+# My Music – Ứng dụng nghe nhạc cá nhân (giao diện "Studio")
 
-Web app nghe nhạc cá nhân: tải nhạc từ YouTube về, lưu trên cloud miễn phí, nghe với giao diện giống Spotify.
+Web app nghe nhạc cá nhân: tải nhạc từ YouTube về, lưu trên cloud miễn phí, nghe với giao diện "Studio" lấy bài đang nghe làm trung tâm (Dock nổi, Stage, Command bar, màu đổi theo ảnh bìa).
 
 - **Backend:** Node.js (Express) + MongoDB Atlas + Cloudinary (file nhạc/ảnh) + yt-dlp/ffmpeg
 - **Frontend:** Vue 3 (sẽ chuyển sang Vite + SFC + Pinia + Vue Router), PWA
@@ -211,6 +211,7 @@ web/  (Vite + Vue 3)
 | 5 | Mobile: bottom nav, mini/full player, cử chỉ vuốt; PWA | ✅ Xong |
 | 6 | Lời bài hát, crossfade, chuẩn hóa âm lượng, chế độ toàn màn hình | ✅ Xong |
 | 7 | Đăng nhập (`APP_PASSWORD`) + `Dockerfile` | ✅ Code xong · ⏳ Chưa deploy |
+| 8 | Giao diện v2 "Studio" (mục 8) | ✅ Xong (mục 1–2 của bảng thiết kế cũ ở trên là v1) |
 
 ### Ghi chú triển khai
 - **Chuẩn hóa âm lượng** làm lúc import (ffmpeg `loudnorm`, -14 LUFS), không tốn CPU lúc phát. Bài import trước đó chưa được chuẩn hóa.
@@ -221,7 +222,7 @@ web/  (Vite + Vue 3)
 
 ---
 
-## 8. Giao diện v2 – "Studio" (kế hoạch)
+## 8. Giao diện v2 – "Studio" (đã triển khai)
 
 **Mục tiêu:** giữ đủ 100% chức năng của v1, nhưng bỏ bố cục kiểu Spotify (3 cột, sidebar thư viện, player bar ngang). Thay bằng một giao diện **lấy bài đang nghe làm trung tâm**: ít cột hơn, ít phải bấm hơn, mọi thao tác nằm gần tay.
 
@@ -367,3 +368,12 @@ Giữ nguyên **stores** (`player`, `library`, `ui`), **composables** và **back
 - Mọi dòng ở bảng 8.5 thao tác được.
 - Phát một bài từ trang chủ tốn ≤ 1 cú bấm, thêm nhạc từ link tốn ≤ 2 thao tác.
 - Không có lỗi console, chạy tốt ở cả 390px và 1440px.
+
+### 8.8 Ghi chú triển khai v2
+- **Khung:** `App.vue` = `TopNav` + nội dung 1 cột + `Dock` + `Stage` (+ `MobileNav` trên mobile). Trang: `ListenView` (Nghe), `ShelfView` (Kệ), `ExploreView` (Khám phá), `CollectionView`, `ArtistView`. Link cũ `/search`, `/library` tự chuyển hướng.
+- **Theme động:** `composables/useTheme.js` lấy màu bìa → bảng màu HSL cho Sáng/Tối, tự chỉnh màu nhấn đạt tương phản ≥ 4.5:1; token khai báo `@property` trong `styles/tokens.css` nên chuyển màu mượt 0.6s.
+- **Waveform:** `composables/usePeaks.js` giải mã file trong trình duyệt khi bài được phát lần đầu, lưu `track.peaks` (200 giá trị) qua `PATCH /api/tracks/:id`; lần sau dùng luôn. Không cần script backfill: bài cũ tự có waveform khi được nghe.
+- **Command bar** (`components/ui/CommandBar.vue`): tìm kiếm, nhận link YouTube (Enter = tải, "Tùy chỉnh…" mở `ImportModal` để chọn bài/sửa info), lệnh `>`. Dán `Ctrl+V` hoặc kéo-thả link vào cửa sổ cũng mở nó.
+- **Chọn nhiều:** `TrackList` (Ctrl/Shift + bấm, nhấn giữ trên mobile) + `SelectionBar`.
+- Không làm công tắc `?ui=v1` (tránh duy trì 2 bộ giao diện).
+

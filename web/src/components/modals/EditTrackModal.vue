@@ -40,13 +40,13 @@ async function save() {
         <div><label class="lbl">Album</label><input v-model="f.album" class="field" /></div>
       </div>
     </form>
-    <template #footer><button class="btn btn-light" :disabled="busy" @click="save">Lưu</button></template>
+    <template #footer><button class="btn btn-primary" :disabled="busy" @click="save">Lưu</button></template>
   </Modal>
 </template>
 
 <style scoped>
 .wrap { display: flex; gap: 16px; }
-.cv { position: relative; width: 180px; flex-shrink: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 60px rgba(0,0,0,.5); }
+.cv { position: relative; width: 180px; flex-shrink: 0; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); --cover-r: 18px; }
 .over { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,.7); opacity: 0; transition: opacity .15s; font-weight: 600; }
 .cv:hover .over { opacity: 1; }
 .fields { flex: 1; display: flex; flex-direction: column; gap: 12px; }

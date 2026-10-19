@@ -3,14 +3,15 @@
 import { ref, computed } from 'vue';
 import Modal from '../ui/Modal.vue';
 import Icon from '../ui/Icon.vue';
+import Select from '../ui/Select.vue';
 import { api } from '../../api.js';
 import { fmtTime } from '../../utils.js';
 import { useLibrary } from '../../stores/library.js';
 import { useUi } from '../../stores/ui.js';
 
-const props = defineProps({ playlistId: String });
+const props = defineProps({ playlistId: String, url: String });
 const lib = useLibrary(), ui = useUi();
-const url = ref('');
+const url = ref(props.url || '');
 const loading = ref(false);
 const error = ref('');
 const data = ref(null); // kết quả preview
@@ -34,6 +35,8 @@ async function doPreview() {
   } catch (e) { error.value = e.message; }
   loading.value = false;
 }
+
+if (props.url) doPreview(); // mở từ Command bar với link sẵn
 
 async function paste() {
   try { url.value = (await navigator.clipboard.readText()).trim(); doPreview(); } catch {}
@@ -96,10 +99,7 @@ async function submit() {
         <label v-if="data.type === 'playlist'" class="chk"><input v-model="createNew" type="checkbox" /> Tạo playlist mới "{{ data.title }}"</label>
         <div v-if="!createNew || data.type === 'video'">
           <label class="lbl">Thêm vào playlist</label>
-          <select v-model="playlistId" class="field">
-            <option value="">Chỉ thêm vào thư viện</option>
-            <option v-for="p in lib.playlists" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <Select v-model="playlistId" :options="[{ value: '', label: 'Chỉ thêm vào thư viện', icon: 'shelf' }, ...lib.playlists.map((p) => ({ value: p.id, label: p.name, sub: `${p.trackIds.length} bài`, icon: 'list' }))]" />
         </div>
       </div>
     </template>
@@ -117,11 +117,11 @@ async function submit() {
 .row { display: flex; gap: 8px; }
 .inp { position: relative; flex: 1; }
 .inp .field { padding-left: 40px; height: 44px; }
-.yt { position: absolute; left: 12px; top: 12px; color: #f33; }
+.yt { position: absolute; left: 12px; top: 12px; color: #ff4e45; }
 .row .btn { height: 44px; }
 .err { display: flex; align-items: center; gap: 6px; color: var(--danger); margin: 12px 0 0; }
 .pv { display: flex; gap: 16px; margin-top: 20px; }
-.thumb { width: 200px; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.thumb { width: 200px; aspect-ratio: 16/9; object-fit: cover; border-radius: 14px; flex-shrink: 0; }
 .grow { flex: 1; min-width: 0; }
 .form { display: flex; flex-direction: column; gap: 12px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -132,10 +132,10 @@ async function submit() {
 .chk { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-2); }
 .chk input, li input { accent-color: var(--accent); width: 16px; height: 16px; }
 .list { list-style: none; margin: 0; padding: 0; max-height: 320px; }
-.list li { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
-.list li:hover { background: rgba(255,255,255,.07); }
+.list li { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 12px; cursor: pointer; }
+.list li:hover { background: var(--hover); }
 .list li.off { opacity: .5; }
-.list img { width: 64px; aspect-ratio: 16/9; object-fit: cover; border-radius: 3px; }
+.list img { width: 64px; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; }
 .dest { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 600px) { .pv { flex-direction: column; } .thumb { width: 100%; } .two { grid-template-columns: 1fr; } }
 </style>

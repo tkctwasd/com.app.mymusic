@@ -1,58 +1,76 @@
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; overflow: hidden; }
 #app { height: 100%; }
 a { color: inherit; text-decoration: none; }
-a.link:hover { text-decoration: underline; }
+a.link:hover, button.link:hover { text-decoration: underline; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 input, textarea, select { font: inherit; color: var(--text); }
 img { display: block; }
 h1, h2, h3 { margin: 0; }
-::selection { background: var(--accent); color: #000; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Scrollbar kiểu Spotify */
 .scroll { overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: transparent transparent; }
-.scroll:hover { scrollbar-color: rgba(255,255,255,.3) transparent; }
+.scroll:hover { scrollbar-color: var(--line-2) transparent; }
 
 .muted { color: var(--text-2); }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.display { font-family: var(--font-display); letter-spacing: -.02em; }
 
 /* Nút */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 32px; padding: 0 16px; border-radius: 999px; font-weight: 700; transition: transform .1s, background .15s; white-space: nowrap; }
-.btn:hover { transform: scale(1.04); }
-.btn:active { transform: scale(1); }
-.btn-primary { background: var(--accent); color: #000; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-light { background: #fff; color: #000; }
-.btn-outline { border: 1px solid var(--text-3); }
-.btn-outline:hover { border-color: #fff; }
-.btn:disabled { opacity: .5; pointer-events: none; }
-.icon-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--text-2); transition: color .15s, transform .1s, background .15s; }
-.icon-btn:hover { color: #fff; transform: scale(1.06); }
-.icon-btn.on { color: var(--accent); position: relative; }
-.icon-btn.on::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); transform: translateX(-50%); }
-.icon-btn.round { background: rgba(0,0,0,.5); color: #fff; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; padding: 0 18px; border-radius: 999px; font-weight: 600; transition: transform .15s var(--ease), background .2s, color .2s, box-shadow .2s; white-space: nowrap; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { box-shadow: 0 6px 20px -6px var(--accent); }
+.btn-light { background: var(--text); color: var(--bg); }
+.btn-soft { background: var(--surface-2); }
+.btn-soft:hover { background: var(--surface-3); }
+.btn-outline { border: 1px solid var(--line-2); }
+.btn-outline:hover { background: var(--hover); }
+.btn:disabled { opacity: .45; pointer-events: none; }
+.icon-btn { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--text-2); transition: color .2s, background .2s, transform .15s var(--ease); flex-shrink: 0; }
+.icon-btn:hover { color: var(--text); background: var(--hover); }
+.icon-btn:active { transform: scale(.92); }
+.icon-btn.on { color: var(--accent); background: var(--accent-soft); }
+.icon-btn.liked { color: var(--accent); }
 
-.chip { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--surface-3); font-size: 14px; transition: background .15s; white-space: nowrap; }
-.chip:hover { background: var(--surface-4); }
-.chip.on { background: #fff; color: #000; }
+.chip { height: 34px; padding: 0 14px; border-radius: 999px; background: var(--hover); color: var(--text-2); font-size: 13px; font-weight: 500; transition: background .2s, color .2s; white-space: nowrap; }
+.chip:hover { background: var(--press); color: var(--text); }
+.chip.on { background: var(--text); color: var(--bg); }
 
-.field { width: 100%; height: 40px; padding: 0 12px; border-radius: 4px; border: 1px solid transparent; background: var(--surface-3); outline: none; }
-.field:focus { border-color: var(--text-3); background: var(--surface-4); }
-textarea.field { height: auto; padding: 10px 12px; resize: vertical; }
-label.lbl { display: block; font-size: 12px; font-weight: 700; margin: 0 0 6px; color: var(--text-2); }
+/* Segmented control */
+.seg { display: inline-flex; padding: 4px; gap: 2px; border-radius: 999px; background: var(--hover); }
+.seg button { height: 32px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 500; color: var(--text-2); transition: background .25s var(--ease), color .2s; white-space: nowrap; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--surface-3); color: var(--text); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
 
-.skeleton { background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+.field { width: 100%; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--hover); outline: none; transition: border-color .2s, background .2s; }
+.field:focus { border-color: var(--accent); background: var(--surface); }
+textarea.field { height: auto; padding: 10px 14px; resize: vertical; }
+select.field { appearance: auto; }
+select.field option { background: var(--surface); }
+label.lbl { display: block; font-size: 12px; font-weight: 600; margin: 0 0 6px; color: var(--text-2); }
+
+.toggle { position: relative; width: 40px; height: 24px; border-radius: 12px; background: var(--surface-3); transition: background .2s; flex-shrink: 0; }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--text-2); transition: transform .25s var(--spring), background .2s; }
+.toggle.on { background: var(--accent); }
+.toggle.on::after { transform: translateX(16px); background: var(--accent-ink); }
+
+kbd { font: 600 11px var(--font); padding: 2px 7px; border-radius: 6px; background: var(--hover); border: 1px solid var(--line); color: var(--text-2); }
+
+.skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
 @keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.fade-enter-active, .fade-leave-active { transition: opacity .15s var(--ease), transform .15s var(--ease); }
-.fade-enter-from { opacity: 0; transform: translateY(6px); }
+.fade-enter-active, .fade-leave-active { transition: opacity .2s var(--ease), transform .25s var(--ease); }
+.fade-enter-from { opacity: 0; transform: translateY(8px); }
 .fade-leave-to { opacity: 0; }
 
-.section-title { display: flex; align-items: baseline; justify-content: space-between; margin: 32px 0 12px; }
-.section-title h2 { font-size: 22px; font-weight: 800; }
-.section-title a { font-size: 13px; font-weight: 700; color: var(--text-2); }
-.section-title a:hover { text-decoration: underline; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 14px; }
+.section-title h2 { font: 600 19px var(--font-display); letter-spacing: -.01em; }
+.section-title a, .section-title button { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.section-title a:hover, .section-title button:hover { color: var(--text); }
 
-.page { padding: 16px 24px 32px; }
-@media (max-width: 767px) { .page { padding: 12px 16px 24px; } }
+.page { width: 100%; max-width: var(--content-w); margin: 0 auto; padding: 8px 32px 32px; }
+@media (max-width: 767px) { .page { padding: 4px 16px 24px; } }

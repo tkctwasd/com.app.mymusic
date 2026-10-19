@@ -1,21 +1,22 @@
 <script setup>
-// Dùng chung cho: Tất cả bài hát, Bài hát đã thích, Playlist, Album
+// Chi tiết dùng chung cho: Tất cả bài hát, Bài hát đã thích, Playlist, Album.
+// Header gọn (bìa + tên + nút ▶ ⇄ lớn), nền màu bìa nhạt dần; danh sách bài có khoảng thở; gợi ý thêm bài cho playlist.
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/ui/Icon.vue';
 import Cover from '../components/ui/Cover.vue';
-import PageHeader from '../components/media/PageHeader.vue';
 import PlayButton from '../components/media/PlayButton.vue';
-import TrackTable from '../components/media/TrackTable.vue';
+import TrackList from '../components/media/TrackList.vue';
 import { useLibrary } from '../stores/library.js';
 import { usePlayer } from '../stores/player.js';
 import { useUi } from '../stores/ui.js';
-import { usePage } from '../composables/usePage.js';
+import { useMenus } from '../composables/useMenus.js';
 import { useDominantColor } from '../composables/useDominantColor.js';
 import { fmtTotal, fold } from '../utils.js';
 
 const props = defineProps({ kind: String, id: String, artist: String });
 const lib = useLibrary(), player = usePlayer(), ui = useUi(), router = useRouter();
+const { addToPlaylistItems, playlistMenu } = useMenus();
 
 const playlist = computed(() => (props.kind === 'playlist' ? lib.playlist(props.id) : null));
 const album = computed(() => (props.kind === 'album' ? lib.albums.find((a) => a.name === props.id && a.artist === props.artist) : null));
@@ -28,7 +29,7 @@ const tracks = computed(() => ({
 }[props.kind]()));
 
 const info = computed(() => ({
-  all: { type: 'Danh sách', title: 'Tất cả bài hát', icon: 'music' },
+  all: { type: 'Danh sách', title: 'Tất cả bài hát', icon: 'music', mosaic: tracks.value.slice(0, 4).map((t) => t.coverUrl).filter(Boolean) },
   liked: { type: 'Playlist', title: 'Bài hát đã thích', liked: true },
   playlist: { type: 'Playlist', title: playlist.value?.name || '', mosaic: tracks.value.map((t) => t.coverUrl).filter(Boolean), desc: playlist.value?.description },
   album: { type: 'Album', title: props.id, cover: album.value?.coverUrl },
@@ -38,14 +39,13 @@ const path = computed(() => router.currentRoute.value.path);
 const context = computed(() => ({ name: info.value.title, path: path.value }));
 const coverForColor = computed(() => info.value.cover || info.value.mosaic?.[0] || '');
 const dom = useDominantColor(coverForColor, () => info.value.title);
-const color = computed(() => (props.kind === 'liked' ? '#5038a0' : props.kind === 'all' ? '#1e5c3c' : dom.value));
+const color = computed(() => (props.kind === 'liked' ? '#e0607e' : dom.value));
 const total = computed(() => tracks.value.reduce((s, t) => s + (t.duration || 0), 0));
 const ctxPlaying = computed(() => player.context?.path === path.value && player.playing);
 
 // Lọc + sắp xếp trong trang
 const filterQ = ref('');
-const showFilter = ref(false);
-const sortBy = ref('custom');
+const sortBy = ref(playlist.value ? 'custom' : 'added');
 const sorts = { custom: 'Thứ tự tùy chỉnh', title: 'Tiêu đề', artist: 'Nghệ sĩ', album: 'Album', added: 'Ngày thêm', plays: 'Lượt nghe', duration: 'Thời lượng' };
 const shown = computed(() => {
   const f = fold(filterQ.value.trim());
@@ -60,28 +60,23 @@ const shown = computed(() => {
 const sortable = computed(() => !!playlist.value && sortBy.value === 'custom' && !filterQ.value);
 
 function play(shuffle) {
-  if (shuffle && !player.shuffle) player.toggleShuffle();
-  if (ctxPlaying.value && !shuffle) return player.toggle();
+  if (shuffle && player.shuffle) return player.toggleShuffle(); // nút ⇄ đang bật -> tắt
+  if (shuffle) player.toggleShuffle();
   if (player.context?.path === path.value && player.track && !shuffle) return player.toggle();
   if (shown.value.length) player.playTracks(shown.value, shuffle ? Math.floor(Math.random() * shown.value.length) : 0, context.value);
 }
-usePage(() => ({ color: color.value, title: info.value.title, play: () => play(false), playing: ctxPlaying.value }));
-
 function sortMenu(e) {
   ui.openMenu(e, Object.entries(sorts).filter(([k]) => k !== 'custom' || playlist.value).map(([k, label]) => ({ label, icon: sortBy.value === k ? 'check' : undefined, fn: () => { sortBy.value = k; } })));
 }
 function moreMenu(e) {
   const ids = tracks.value.map((t) => t.id);
   const p = playlist.value;
+  if (p) return playlistMenu(e, p);
   ui.openMenu(e, [
     { label: 'Thêm vào hàng đợi', icon: 'queue', fn: () => { player.addToQueue(ids); ui.toast('Đã thêm vào hàng đợi'); } },
-    { label: 'Thêm vào playlist khác', icon: 'plus', children: lib.playlists.filter((x) => x !== p).map((x) => ({ label: x.name, fn: () => lib.addToPlaylist(x, ids) })) },
-    !p && { label: 'Lưu thành playlist mới', icon: 'plus', fn: async () => { const np = await lib.createPlaylist(info.value.title, ids); router.push(`/playlist/${np.id}`); } },
-    p && { sep: true },
-    p && { label: p.pinned ? 'Bỏ ghim' : 'Ghim playlist', icon: 'pin', fn: () => lib.updatePlaylist(p, { pinned: !p.pinned }) },
-    p && { label: 'Sửa thông tin chi tiết', icon: 'edit', fn: () => ui.open('editPlaylist', { playlist: p }) },
-    p && { label: 'Xóa playlist', icon: 'trash', danger: true, fn: async () => { if (confirm(`Xóa "${p.name}"?`)) { await lib.deletePlaylist(p); router.push('/'); } } },
-  ].filter(Boolean));
+    { label: 'Thêm vào playlist', icon: 'plus', children: addToPlaylistItems(ids) },
+    { label: 'Lưu thành playlist mới', icon: 'plus', fn: async () => { const np = await lib.createPlaylist(info.value.title, ids); router.push(`/playlist/${np.id}`); } },
+  ]);
 }
 
 // Gợi ý thêm bài vào playlist
@@ -90,57 +85,60 @@ const suggestions = computed(() => {
   if (!playlist.value) return [];
   const f = fold(findQ.value.trim());
   const pool = lib.tracks.filter((t) => !playlist.value.trackIds.includes(t.id));
-  return (f ? pool.filter((t) => fold(`${t.title} ${t.artist} ${t.album}`).includes(f)) : pool).slice(0, f ? 20 : 10);
+  return (f ? pool.filter((t) => fold(`${t.title} ${t.artist} ${t.album}`).includes(f)) : pool).slice(0, f ? 20 : 8);
 });
 </script>
 
 <template>
-  <div v-if="kind === 'playlist' && !playlist" class="page"><p class="muted" style="padding-top: 80px">Không tìm thấy playlist.</p></div>
+  <div v-if="kind === 'playlist' && !playlist" class="page"><p class="muted" style="padding-top: 40px">Không tìm thấy playlist.</p></div>
   <div v-else class="coll" :style="{ '--c': color }">
-    <PageHeader :type="info.type" :title="info.title" :color="color" :cover="info.cover" :mosaic="info.mosaic" :liked="info.liked" :icon="info.icon"
-      :editable="!!playlist" @edit="ui.open('editPlaylist', { playlist })">
-      <p v-if="info.desc" class="desc-text">{{ info.desc }}</p>
-      <template v-if="album"><RouterLink :to="`/artist/${encodeURIComponent(album.artist)}`" class="link"><b>{{ album.artist }}</b></RouterLink> •</template>
-      <span>{{ tracks.length }} bài<template v-if="total">, {{ fmtTotal(total) }}</template></span>
-    </PageHeader>
-
-    <div class="body">
-      <div class="actions">
-        <PlayButton :size="56" :playing="ctxPlaying" :disabled="!tracks.length" @click="play(false)" />
-        <button class="icon-btn big" :class="{ on: player.shuffle }" title="Phát ngẫu nhiên" @click="play(true)"><Icon name="shuffle" size="28" /></button>
-        <button class="icon-btn big" title="Tùy chọn khác" @click="moreMenu"><Icon name="more" size="28" /></button>
-        <div class="right">
-          <div class="filter" :class="{ open: showFilter || filterQ }">
-            <button class="icon-btn" title="Tìm trong danh sách" @click="showFilter = true; $nextTick(() => $refs.fi.focus())"><Icon name="search" size="18" /></button>
-            <input ref="fi" v-model="filterQ" placeholder="Tìm trong danh sách" @blur="showFilter = false" />
+    <div class="wash" />
+    <div class="page">
+      <header class="hd">
+        <button class="cv-btn" :class="{ editable: !!playlist }" :disabled="!playlist" title="Sửa thông tin" @click="ui.open('editPlaylist', { playlist })">
+          <Cover :src="info.cover" :mosaic="info.mosaic" :liked="info.liked" :icon="info.icon" :size="480" class="cv" />
+        </button>
+        <div class="info">
+          <span class="type">{{ info.type }}</span>
+          <h1 class="display" :class="{ long: info.title.length > 28 }" @click="playlist && ui.open('editPlaylist', { playlist })">{{ info.title }}</h1>
+          <p v-if="info.desc" class="desc">{{ info.desc }}</p>
+          <p class="meta">
+            <template v-if="album"><RouterLink :to="`/artist/${encodeURIComponent(album.artist)}`" class="link"><b>{{ album.artist }}</b></RouterLink> · </template>
+            {{ tracks.length }} bài<template v-if="total"> · {{ fmtTotal(total) }}</template>
+          </p>
+          <div class="acts">
+            <PlayButton :size="60" :playing="ctxPlaying" :disabled="!tracks.length" @click="play(false)" />
+            <button class="round-btn" :class="{ on: player.shuffle }" title="Phát ngẫu nhiên" @click="play(true)"><Icon name="shuffle" size="20" /></button>
+            <button class="round-btn" title="Tùy chọn khác" @click="moreMenu"><Icon name="more" size="20" /></button>
           </div>
-          <button class="sort" @click="sortMenu">{{ sorts[sortBy] }} <Icon name="sort" size="16" /></button>
         </div>
+      </header>
+
+      <div class="bar">
+        <label class="filter"><Icon name="search" size="16" /><input v-model="filterQ" placeholder="Lọc trong danh sách" /></label>
+        <button class="btn btn-outline sm" @click="sortMenu"><Icon name="sort" size="15" /> {{ sorts[sortBy] }}</button>
       </div>
 
-      <TrackTable v-if="shown.length" :tracks="shown" :context="context" :playlist="playlist" :sortable="sortable" :show-album="kind !== 'album'" :numbered="true" />
+      <TrackList v-if="shown.length" :tracks="shown" :context="context" :playlist="playlist" :sortable="sortable" :show-album="kind !== 'album'" />
       <p v-else-if="tracks.length" class="muted pad">Không có bài nào khớp "{{ filterQ }}".</p>
       <div v-else-if="kind === 'liked'" class="empty">
-        <Icon name="heart" size="56" />
-        <h2>Những bài hát bạn thích sẽ xuất hiện ở đây</h2>
-        <p class="muted">Lưu bài hát bằng cách nhấn vào biểu tượng trái tim.</p>
+        <Icon name="heart" size="44" />
+        <h2 class="display">Những bài bạn thích sẽ nằm ở đây</h2>
+        <p class="muted">Nhấn ♡ ở bất kỳ bài nào, hoặc phím <kbd>L</kbd> khi đang nghe.</p>
       </div>
 
       <section v-if="playlist" class="find">
-        <h2>{{ tracks.length ? 'Gợi ý thêm' : 'Hãy cùng tìm nội dung cho playlist của bạn' }}</h2>
-        <div class="find-in">
-          <Icon name="search" size="18" class="si" />
-          <input v-model="findQ" class="field" placeholder="Tìm bài hát trong thư viện" />
-        </div>
+        <div class="section-title"><h2>{{ tracks.length ? 'Thêm bài khác' : 'Hãy chọn vài bài cho playlist này' }}</h2></div>
+        <label class="filter wide"><Icon name="search" size="16" /><input v-model="findQ" placeholder="Tìm bài trong thư viện" /></label>
         <div v-for="t in suggestions" :key="t.id" class="sug">
           <Cover :src="t.coverUrl" :size="80" class="scv" />
-          <div class="meta"><div class="ellipsis">{{ t.title }}</div><small class="muted ellipsis">{{ t.artist }}</small></div>
+          <div class="m"><div class="ellipsis">{{ t.title }}</div><small class="muted ellipsis">{{ t.artist }}</small></div>
           <span class="muted ellipsis alb">{{ t.album }}</span>
-          <button class="btn btn-outline" @click="lib.addToPlaylist(playlist, t.id)">Thêm</button>
+          <button class="btn btn-soft sm" @click="lib.addToPlaylist(playlist, t.id)"><Icon name="plus" size="15" /> Thêm</button>
         </div>
-        <p v-if="!suggestions.length" class="muted">
-          {{ lib.tracks.length ? 'Không còn bài nào phù hợp.' : 'Thư viện đang trống.' }}
-          <button class="link" style="text-decoration: underline" @click="ui.open('import', { playlistId: playlist.id })">Thêm nhạc từ YouTube vào playlist này</button>
+        <p class="muted more">
+          {{ suggestions.length ? '' : lib.tracks.length ? 'Không còn bài nào phù hợp.' : 'Thư viện đang trống.' }}
+          <button class="link" @click="ui.open('import', { playlistId: playlist.id })"><Icon name="youtube" size="15" /> Thêm nhạc từ YouTube thẳng vào playlist này</button>
         </p>
       </section>
     </div>
@@ -148,35 +146,49 @@ const suggestions = computed(() => {
 </template>
 
 <style scoped>
-.body { position: relative; background: linear-gradient(color-mix(in srgb, var(--c) 30%, #121212), var(--surface) 232px); padding-bottom: 32px; }
-.actions { display: flex; align-items: center; gap: 24px; padding: 24px; }
-.icon-btn.big { width: 40px; height: 40px; }
-.right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.filter { display: flex; align-items: center; border-radius: 4px; width: 32px; overflow: hidden; transition: width .2s, background .2s; }
-.filter.open { width: 220px; background: var(--surface-3); }
-.filter input { border: 0; background: none; outline: none; font-size: 13px; width: 0; padding: 0; opacity: 0; }
-.filter.open input { width: 180px; opacity: 1; }
-.sort { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); }
-.sort:hover { color: #fff; }
-.desc-text { width: 100%; margin: 0 0 8px; color: rgba(255,255,255,.7); }
-.pad { padding: 0 32px; }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 16px; text-align: center; }
-.empty h2 { font-size: 28px; font-weight: 800; }
-.find { padding: 40px 40px 0; }
-.find h2 { font-size: 22px; font-weight: 800; margin-bottom: 16px; }
-.find-in { position: relative; width: min(360px, 100%); margin-bottom: 16px; }
-.find-in .field { padding-left: 40px; }
-.si { position: absolute; left: 12px; top: 11px; color: var(--text-2); }
-.sug { display: grid; grid-template-columns: 40px 4fr 3fr auto; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; }
-.sug:hover { background: rgba(255,255,255,.1); }
-.scv { width: 40px; }
-.meta { min-width: 0; display: flex; flex-direction: column; }
-.alb { font-size: 13px; }
+.coll { position: relative; min-height: 100%; }
+.wash { position: absolute; z-index: 0; top: calc(-1 * var(--nav-h)); left: 0; right: 0; height: 520px; pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 0%, color-mix(in oklab, var(--c) 45%, transparent), transparent 70%); opacity: .8; transition: background .6s; }
+.page { position: relative; z-index: 1; }
+.hd { display: flex; align-items: flex-end; gap: 32px; padding: 20px 0 8px; }
+.cv-btn { flex-shrink: 0; cursor: default; border-radius: 24px; transition: transform .3s var(--spring); }
+.cv-btn.editable { cursor: pointer; }
+.cv-btn.editable:hover { transform: scale(1.02) rotate(-1deg); }
+.cv { width: clamp(160px, 18vw, 220px); --cover-r: 24px; box-shadow: 0 24px 60px -20px rgb(0 0 0 / .55); }
+.info { flex: 1; min-width: 0; }
+.type { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--hover); border: 1px solid var(--line); font-size: 12px; font-weight: 500; color: var(--text-2); }
+h1 { font-size: clamp(30px, 4.2vw, 52px); font-weight: 600; line-height: 1.1; margin: 10px 0 8px; overflow-wrap: anywhere; }
+h1.long { font-size: clamp(24px, 3vw, 38px); }
+.desc { margin: 0 0 6px; color: var(--text-2); max-width: 60ch; }
+.meta { margin: 0; color: var(--text-2); font-size: 14px; }
+.meta b { color: var(--text); font-weight: 600; }
+.acts { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.round-btn { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--hover); border: 1px solid var(--line); color: var(--text-2); transition: all .2s; }
+.round-btn:hover { background: var(--press); color: var(--text); }
+.round-btn.on { color: var(--accent); background: var(--accent-soft); }
+.bar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin: 20px 0 10px; }
+.filter { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; background: var(--hover); border: 1px solid var(--line); color: var(--text-3); width: 220px; }
+.filter:focus-within { border-color: var(--accent); }
+.filter input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 13.5px; }
+.filter.wide { width: min(380px, 100%); margin-bottom: 12px; }
+.btn.sm { height: 38px; padding: 0 14px; font-size: 13px; font-weight: 500; }
+.pad { padding: 16px 8px; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 56px 16px; text-align: center; color: var(--text-2); }
+.empty h2 { font-size: 22px; font-weight: 600; color: var(--text); }
+.find { margin-top: 24px; }
+.sug { display: flex; align-items: center; gap: 14px; padding: 8px 10px; border-radius: 16px; }
+.sug:hover { background: var(--hover); }
+.scv { width: 44px; --cover-r: 10px; }
+.m { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.alb { width: 28%; font-size: 13px; }
+.more { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.more .link { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 500; }
 @media (max-width: 767px) {
-  .actions { padding: 16px; gap: 16px; }
-  .filter.open { width: 160px; }
-  .find { padding: 32px 16px 0; }
-  .sug { grid-template-columns: 40px 1fr auto; }
+  .hd { flex-direction: column; align-items: center; text-align: center; gap: 18px; padding-top: 12px; }
+  .cv { width: min(62vw, 240px); }
+  .acts { justify-content: center; }
+  .bar { justify-content: stretch; }
+  .filter { flex: 1; width: auto; }
   .alb { display: none; }
 }
 </style>

@@ -1,22 +1,26 @@
 // Phím tắt toàn cục (bỏ qua khi đang gõ trong input)
 import { onMounted, onBeforeUnmount } from 'vue';
-import { useRouter } from 'vue-router';
 import { usePlayer } from '../stores/player.js';
 import { useLibrary } from '../stores/library.js';
 import { useUi } from '../stores/ui.js';
 
 export function useShortcuts() {
-  const player = usePlayer(), lib = useLibrary(), ui = useUi(), router = useRouter();
+  const player = usePlayer(), lib = useLibrary(), ui = useUi();
 
   const onKey = (e) => {
     const tag = e.target.tagName;
-    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return focusSearch(); }
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return ui.cmd ? (ui.cmd = null) : ui.openCmd(); }
     if (e.key === 'Escape') {
-      if (ui.menu) ui.menu = null; else if (ui.modal) ui.close(); else if (ui.fullscreen) ui.fullscreen = false; else if (ui.fullPlayer) ui.fullPlayer = false;
+      if (ui.menu) ui.menu = null;
+      else if (ui.modal) ui.close();
+      else if (ui.cmd) ui.cmd = null;
+      else if (ui.present) ui.present = false;
+      else if (ui.stage) ui.closeStage();
+      else if (ui.selection.length) ui.clearSelection();
       return;
     }
-    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || ui.cmd || ui.modal) return;
     const k = e.key;
     const act = {
       ' ': () => player.toggle(),
@@ -28,16 +32,13 @@ export function useShortcuts() {
       l: () => player.track && lib.toggleLike(player.track),
       s: () => player.toggleShuffle(),
       r: () => player.cycleRepeat(),
-      f: () => { ui.fullscreen = !ui.fullscreen; },
-      q: () => ui.togglePanel('queue'),
-      '/': () => focusSearch(),
+      f: () => ui.togglePresent(),
+      q: () => (ui.stage && ui.stageTab === 'queue' ? ui.closeStage() : ui.openStage('queue')),
+      y: () => (ui.stage && ui.stageTab === 'lyrics' ? ui.closeStage() : ui.openStage('lyrics')),
+      '/': () => ui.openCmd(),
+      '>': () => ui.openCmd('>'),
     }[k.length === 1 ? k.toLowerCase() : k];
     if (act) { e.preventDefault(); act(); }
-  };
-
-  const focusSearch = async () => {
-    if (router.currentRoute.value.name !== 'search') await router.push('/search');
-    setTimeout(() => document.querySelector('#search-input')?.focus(), 30);
   };
 
   onMounted(() => window.addEventListener('keydown', onKey));

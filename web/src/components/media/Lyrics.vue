@@ -56,11 +56,11 @@ watch(activeIdx, async (i) => {
 
 <style scoped>
 .lyrics { height: 100%; padding: 16px 0 50%; }
-p { margin: 0 0 14px; font-size: 22px; font-weight: 800; line-height: 1.3; color: rgba(255,255,255,.45); cursor: pointer; transition: color .2s; }
-p:hover { color: rgba(255,255,255,.85); }
-p.past { color: rgba(255,255,255,.7); }
-p.active { color: #fff; }
-.big p { font-size: clamp(24px, 3.2vw, 40px); margin-bottom: 20px; }
+p { margin: 0 0 16px; font-size: 22px; font-weight: 700; line-height: 1.35; color: color-mix(in oklab, var(--text) 38%, transparent); cursor: pointer; transition: color .3s, transform .3s var(--ease); transform-origin: left center; }
+p:hover { color: color-mix(in oklab, var(--text) 80%, transparent); }
+p.past { color: color-mix(in oklab, var(--text) 60%, transparent); }
+p.active { color: var(--text); transform: scale(1.03); }
+.big p { font-size: clamp(26px, 3.4vw, 44px); margin-bottom: 22px; }
 .plain { white-space: pre-wrap; font: 600 16px/1.7 var(--font); color: var(--text-2); margin: 0; }
 .state { color: var(--text-2); padding: 24px 0; }
 .src { color: var(--text-3); }
