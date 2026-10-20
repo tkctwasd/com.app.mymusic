@@ -64,7 +64,7 @@ async function pump() {
       });
       if (job.playlistId) {
         const p = await Playlists.get(job.playlistId);
-        if (p) await Playlists.update(p.id, { trackIds: [...p.trackIds, track.id] });
+        if (p && !p.trackIds.includes(track.id)) await Playlists.update(p.id, { trackIds: [...p.trackIds, track.id] });
       }
       Object.assign(job, { status: 'done', progress: 100, trackId: track.id, title: track.title }); emit(job);
     } finally {

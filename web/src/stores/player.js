@@ -11,7 +11,9 @@ const other = () => decks[1 - active];
 let fadeTimer = null;
 let countedId = null;
 
-const PERSIST = ['context', 'order', 'original', 'pos', 'upNext', 'currentId', 'time', 'volume', 'muted', 'shuffle', 'repeat', 'crossfade'];
+const PERSIST = ['context', 'order', 'original', 'pos', 'upNext', 'currentId', 'time', 'volume', 'muted', 'shuffle', 'repeat', 'crossfade', 'sleep'];
+// Vị trí cần tua tới khi bắt đầu phát (trình duyệt di động hay bỏ qua currentTime đặt lúc chưa phát)
+let pendingSeek = 0;
 
 export const usePlayer = defineStore('player', {
   state: () => ({
@@ -40,22 +42,27 @@ export const usePlayer = defineStore('player', {
   actions: {
     init() {
       decks.forEach((a, i) => {
-        a.ontimeupdate = () => { if (i === active) { this.time = a.currentTime; this.checkCrossfade(); } };
+        a.ontimeupdate = () => { if (i === active) { this.time = a.currentTime; this.checkCrossfade(); this.tickSleep(); } };
         a.ondurationchange = () => { if (i === active) this.duration = a.duration || this.track?.duration || 0; };
-        a.onplay = () => { if (i === active) this.playing = true; };
+        a.onplay = () => { if (i === active) { this.playing = true; this.applyPendingSeek(); } };
         a.onpause = () => { if (i === active && !fadeTimer) this.playing = false; };
         a.onwaiting = () => { if (i === active) this.buffering = true; };
-        a.onplaying = () => { if (i === active) this.buffering = false; };
+        a.onplaying = () => { if (i === active) { this.buffering = false; this.applyPendingSeek(); } };
         a.onended = () => { if (i === active) this.onEnded(); };
         a.onerror = () => { if (i === active && a.src) this.buffering = false; };
       });
+      // Hẹn giờ đã hết hạn khi mở lại app thì bỏ
+      if (this.sleep?.mode === 'min' && this.sleep.endAt <= Date.now()) this.sleep = null;
       this.applyVolume();
       // Khôi phục bài đang nghe dở (không tự phát)
       if (this.track) this.loadTrack(this.track, { autoplay: false, startAt: this.time });
       this.setupMediaSession();
       setInterval(() => { this.now = Date.now(); this.tickSleep(); }, 500);
       setInterval(() => this.persist(), 3000);
+      // Di động thường không bắn beforeunload khi thoát app -> lưu cả khi ẩn trang
       window.addEventListener('beforeunload', () => this.persist());
+      window.addEventListener('pagehide', () => this.persist());
+      document.addEventListener('visibilitychange', () => { if (document.hidden) this.persist(); else this.tickSleep(); });
     },
     persist() { save('player', Object.fromEntries(PERSIST.map((k) => [k, this[k]]))); },
 
@@ -83,6 +90,7 @@ export const usePlayer = defineStore('player', {
       other().pause();
       if (a.src !== new URL(t.fileUrl, location.href).href) a.src = t.fileUrl;
       this.time = startAt; this.duration = t.duration || 0;
+      pendingSeek = startAt;
       const seek = () => { if (startAt) a.currentTime = startAt; };
       a.readyState >= 1 ? seek() : a.addEventListener('loadedmetadata', seek, { once: true });
       this.applyVolume();
@@ -93,7 +101,11 @@ export const usePlayer = defineStore('player', {
     toggle() {
       const a = cur();
       if (!this.track) { const lib = useLibrary(); return lib.tracks.length && this.playTracks(lib.tracks, 0, { name: 'Bài hát', path: '/songs' }); }
-      if (a.paused) { a.play().catch(() => {}); this.countPlay(this.track); } else a.pause();
+      if (a.paused) {
+        // Phần tử audio bị trình duyệt nạp lại (thoát app/ngủ máy) -> tua về đúng chỗ đang hiển thị
+        if (Math.abs(a.currentTime - this.time) > 1.5) pendingSeek = this.time;
+        a.play().catch(() => {}); this.countPlay(this.track);
+      } else { a.pause(); this.time = a.currentTime; }
     },
     isCurrent(t, path) { return this.currentId === t?.id && (!path || this.context?.path === path); },
     // Phát / dừng cả một ngữ cảnh (playlist, album...)
@@ -126,7 +138,14 @@ export const usePlayer = defineStore('player', {
       const id = this.advance();
       if (id) this.playId(id); else this.playing = false;
     },
-    seek(t) { cur().currentTime = t; this.time = t; },
+    seek(t) { pendingSeek = 0; cur().currentTime = t; this.time = t; },
+    applyPendingSeek() {
+      const a = cur(), t = pendingSeek;
+      if (!t) return;
+      if (a.readyState < 1) return; // chờ loadedmetadata/playing
+      pendingSeek = 0;
+      if (Math.abs(a.currentTime - t) > 1) { a.currentTime = t; this.time = t; }
+    },
     skip(sec) { this.seek(Math.max(0, Math.min(this.duration, cur().currentTime + sec))); },
 
     // ---- Crossfade ----
@@ -189,11 +208,12 @@ export const usePlayer = defineStore('player', {
     setSleep(v) {
       this.sleepFade = 1; this.applyVolume();
       this.sleep = v === 'end' ? { mode: 'end' } : v ? { mode: 'min', endAt: Date.now() + v * 60000 } : null;
+      this.persist();
     },
     tickSleep() {
       if (this.sleep?.mode !== 'min') return;
       const left = (this.sleep.endAt - Date.now()) / 1000;
-      if (left <= 0) { cur().pause(); this.sleep = null; this.sleepFade = 1; this.applyVolume(); return; }
+      if (left <= 0) { this.stopFade(); cur().pause(); this.sleep = null; this.sleepFade = 1; this.applyVolume(); this.persist(); return; }
       if (left <= 10) { this.sleepFade = left / 10; this.applyVolume(); }
     },
 

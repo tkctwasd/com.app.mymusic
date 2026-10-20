@@ -153,7 +153,12 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
 .head h1 { font-size: clamp(28px, 3.4vw, 40px); font-weight: 600; }
 .actions { display: flex; gap: 8px; }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 20px 0 24px; }
-.tools { display: flex; align-items: center; gap: 8px; }
+.tools { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; margin-left: auto; }
+.tools > * { flex-shrink: 0; }
+.tools > .filter { flex: 1 1 160px; max-width: 240px; }
+.tabs { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex-shrink: 0; }
 .filter { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 999px; background: var(--hover); border: 1px solid var(--line); color: var(--text-3); width: 200px; }
 .filter:focus-within { border-color: var(--accent); }
 .filter input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 13.5px; }
@@ -184,9 +189,9 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
   .up span { display: none; }
   .up { width: 38px; padding: 0; }
   .tabs { width: 100%; }
-  .tabs button { flex: 1; min-width: 0; padding: 0 4px; }
-  .tools { width: 100%; min-width: 0; }
-  .filter { flex: 1; width: auto; min-width: 0; }
+  .tabs button { flex: 1 0 auto; padding: 0 12px; }
+  .tools { width: 100%; flex-wrap: nowrap; margin-left: 0; }
+  .tools > .filter { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; }
   .tools .sm { width: 38px; padding: 0; flex-shrink: 0; }
   .sort-l { display: none; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }

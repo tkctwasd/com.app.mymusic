@@ -92,17 +92,17 @@ function swipeQueue(t) { swipeOpen.value = null; player.addToQueue(t.id); ui.toa
 <template>
   <div class="tl" :class="{ selecting: ui.selection.length }" role="list">
     <div v-for="(t, i) in tracks" :key="t.id + i" class="wrap" role="listitem">
-      <div v-if="ui.isMobile" class="swipe-acts">
+      <div v-if="ui.isMobile && rowShift(i)" class="swipe-acts">
         <button class="sa q" @click="swipeQueue(t)"><Icon name="queue" size="18" />Hàng đợi</button>
         <button class="sa del" @click="swipeRemove(t)"><Icon :name="playlist ? 'minus' : 'trash'" size="18" />{{ playlist ? 'Bỏ ra' : 'Xóa' }}</button>
       </div>
       <div class="row"
         :class="{ cur: isCur(t), sel: selected.has(t.id), over: dnd.overIndex.value === i && dnd.dragFrom.value !== i }"
         :style="{ transform: rowShift(i) ? `translateX(${rowShift(i)}px)` : '', transition: swipeIdx === i ? 'none' : '' }"
-        v-bind="ui.isMobile ? {} : dragBind(i, t)"
+        v-bind="ui.isMobile ? { 'data-sort-g': dnd.gid, 'data-sort-i': i } : dragBind(i, t)"
         @click="onClick($event, i)" @contextmenu="trackMenu($event, t, { playlist })"
         @touchstart.passive="tStart($event, i)" @touchmove.passive="tMove" @touchend="tEnd">
-        <span v-if="sortable && !ui.isMobile" class="grip" title="Kéo để sắp xếp"><Icon name="grip" size="16" /></span>
+        <span v-if="sortable" class="grip" title="Kéo để sắp xếp" v-bind="ui.isMobile ? dnd.handle(i) : {}" @click.stop><Icon name="grip" size="16" /></span>
         <span class="n">
           <span v-if="selected.has(t.id) || (ui.selection.length && !ui.isMobile)" class="check" :class="{ on: selected.has(t.id) }" @click.stop="toggleSel(i)"><Icon v-if="selected.has(t.id)" name="check" size="14" /></span>
           <template v-else>
@@ -131,13 +131,14 @@ function swipeQueue(t) { swipeOpen.value = null; player.addToQueue(t.id); ui.toa
 
 <style scoped>
 .tl { display: flex; flex-direction: column; gap: 2px; }
-.wrap { position: relative; border-radius: 16px; overflow: hidden; }
-.row { position: relative; display: flex; align-items: center; gap: 14px; height: 64px; padding: 0 10px 0 8px; border-radius: 16px; color: var(--text-2); background: var(--bg); transition: background .2s, transform .3s var(--ease); cursor: default; user-select: none; }
+/* Bo góc + clip chỉ ở .wrap; lớp nút vuốt chỉ render khi đang vuốt để không lộ viền ở góc bo */
+.wrap { position: relative; border-radius: 16px; overflow: hidden; isolation: isolate; }
+.row { position: relative; display: flex; align-items: center; gap: 14px; height: 64px; padding: 0 10px 0 8px; color: var(--text-2); background: var(--bg); transition: background .2s, transform .3s var(--ease); cursor: default; user-select: none; }
 .row:hover { background: color-mix(in oklab, var(--text) 5%, var(--bg)); }
 .row.cur { background: color-mix(in oklab, var(--accent) 9%, var(--bg)); }
 .row.sel { background: color-mix(in oklab, var(--accent) 16%, var(--bg)); }
 .row.over { box-shadow: inset 0 2px 0 var(--accent); }
-.grip { color: var(--text-3); opacity: 0; cursor: grab; margin-right: -8px; }
+.grip { color: var(--text-3); opacity: 0; cursor: grab; margin-right: -8px; touch-action: none; display: grid; place-items: center; }
 .row:hover .grip { opacity: 1; }
 .n { width: 28px; flex-shrink: 0; display: flex; justify-content: center; font-variant-numeric: tabular-nums; font-size: 14px; color: var(--text-3); }
 .hplay { display: none; place-items: center; color: var(--text); }
@@ -172,6 +173,7 @@ function swipeQueue(t) { swipeOpen.value = null; player.addToQueue(t.id); ui.toa
   .cv { width: 48px; }
   .more, .like.liked { opacity: 1; }
   .like:not(.liked) { display: none; }
+  .grip { opacity: 1; width: 36px; height: 100%; margin: 0 -10px 0 -6px; }
   .hover-album { display: none; }
 }
 </style>

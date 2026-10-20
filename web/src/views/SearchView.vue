@@ -169,6 +169,7 @@ const browse = computed(() => [
 .tile span { position: relative; z-index: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tcv { position: absolute; width: 45%; right: -6%; bottom: -4%; transform: rotate(25deg); box-shadow: 0 2px 4px rgba(0,0,0,.3); }
 .chips { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; scrollbar-width: none; }
+.chips .chip { flex-shrink: 0; white-space: nowrap; }
 .none { text-align: center; padding: 64px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .none h2 { font-size: 24px; }
 .top-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 24px; }

@@ -145,7 +145,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFs));
               <div class="q-head"><h3>Tiếp theo (bạn thêm)</h3><button class="link" @click="player.upNext = []">Xóa</button></div>
               <div v-for="(q, i) in player.upcoming.manual" :key="'m' + i + q.id" class="q-item" :class="{ over: manualDnD.overIndex.value === i }"
                 v-bind="manualDnD.bind(i, [q.id])" @click="player.jumpManual(i)" @contextmenu="trackMenu($event, q)">
-                <Icon name="grip" size="16" class="grip" />
+                <span class="grip" v-bind="manualDnD.handle(i)" @click.stop><Icon name="grip" size="16" /></span>
                 <Cover :src="q.coverUrl" :size="96" class="sm-cv" />
                 <div class="m"><div class="ellipsis">{{ q.title }}</div><small class="ellipsis">{{ q.artist }}</small></div>
                 <button class="icon-btn rm" title="Bỏ khỏi hàng đợi" @click.stop="player.removeManual(i)"><Icon name="x" size="16" /></button>
@@ -155,7 +155,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFs));
               <div class="q-head"><h3 class="ellipsis">Từ: {{ player.context?.name || 'Danh sách' }}</h3><button class="link" @click="player.clearQueue()">Xóa</button></div>
               <div v-for="(q, i) in player.upcoming.context.slice(0, 100)" :key="'c' + i + q.id" class="q-item" :class="{ over: ctxDnD.overIndex.value === i }"
                 v-bind="ctxDnD.bind(i, [q.id])" @click="player.jumpContext(i)" @contextmenu="trackMenu($event, q)">
-                <Icon name="grip" size="16" class="grip" />
+                <span class="grip" v-bind="ctxDnD.handle(i)" @click.stop><Icon name="grip" size="16" /></span>
                 <Cover :src="q.coverUrl" :size="96" class="sm-cv" />
                 <div class="m"><div class="ellipsis">{{ q.title }}</div><small class="ellipsis">{{ q.artist }}</small></div>
                 <span class="dur">{{ fmtTime(q.duration) }}</span>
@@ -244,7 +244,8 @@ h1 { font-size: clamp(20px, 2.2vw, 30px); font-weight: 600; line-height: 1.2; di
 .q-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; margin: 0 -8px; border-radius: 12px; cursor: pointer; }
 .q-item:hover { background: var(--hover); }
 .q-item.over { box-shadow: inset 0 2px 0 var(--accent); }
-.grip { color: var(--text-3); opacity: 0; cursor: grab; }
+.grip { color: var(--text-3); opacity: 0; cursor: grab; display: grid; place-items: center; touch-action: none; }
+.mobile .grip { width: 36px; height: 44px; margin: 0 -8px 0 -10px; }
 .q-item:hover .grip { opacity: 1; }
 .sm-cv { width: 42px; --cover-r: 10px; }
 .m { flex: 1; min-width: 0; display: flex; flex-direction: column; }

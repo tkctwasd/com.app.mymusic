@@ -3,6 +3,9 @@ import { api } from '../api.js';
 import { fold } from '../utils.js';
 import { useUi } from './ui.js';
 
+// Lấy id video YouTube từ link (watch?v=, youtu.be/, shorts/, music.youtube...)
+const ytId = (u = '') => /(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/.exec(u)?.[1] || '';
+
 export const useLibrary = defineStore('library', {
   state: () => ({ tracks: [], playlists: [], loaded: false, jobs: [] }),
   getters: {
@@ -92,17 +95,19 @@ export const useLibrary = defineStore('library', {
 
     // ---- Playlists ----
     async createPlaylist(name, trackIds = []) {
+      trackIds = [...new Set(trackIds)];
       const p = await api('/api/playlists', { method: 'POST', body: { name: name || `Playlist của tôi #${this.playlists.length + 1}`, trackIds } });
       this.playlists.unshift(p);
       return p;
     },
     async updatePlaylist(p, patch) { Object.assign(p, await api(`/api/playlists/${p.id}`, { method: 'PATCH', body: patch })); },
     async addToPlaylist(p, ids) {
-      ids = [].concat(ids);
+      ids = [...new Set([].concat(ids))];
       const add = ids.filter((id) => !p.trackIds.includes(id));
-      if (!add.length) return useUi().toast(`Đã có trong ${p.name}`);
+      if (!add.length) return useUi().toast(ids.length > 1 ? `Các bài này đã có trong ${p.name}` : `Bài này đã có trong ${p.name}`);
       await this.updatePlaylist(p, { trackIds: [...p.trackIds, ...add] });
-      useUi().toast(`Đã thêm vào ${p.name}`);
+      const skip = ids.length - add.length;
+      useUi().toast(`Đã thêm ${add.length} bài vào ${p.name}${skip ? ` (bỏ qua ${skip} bài đã có)` : ''}`);
     },
     async removeFromPlaylist(p, ids) { ids = [].concat(ids); await this.updatePlaylist(p, { trackIds: p.trackIds.filter((x) => !ids.includes(x)) }); },
     async moveInPlaylist(p, from, to) {
@@ -119,6 +124,24 @@ export const useLibrary = defineStore('library', {
 
     // ---- Import ----
     async startImport(items, playlistId) {
+      // Bỏ link đã có trong thư viện / đang tải; bài đã có thì chỉ thêm vào playlist (nếu có)
+      const ui = useUi();
+      const have = new Map(this.tracks.map((t) => [ytId(t.sourceUrl), t]).filter(([k]) => k));
+      const pending = new Set(this.activeJobs.map((j) => ytId(j.url)).filter(Boolean));
+      const seen = new Set(), existed = [];
+      items = items.filter((i) => {
+        const k = ytId(i.url);
+        if (!k) return true;
+        if (have.has(k)) { existed.push(have.get(k).id); return false; }
+        if (pending.has(k) || seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+      const p = playlistId && this.playlists.find((x) => x.id === playlistId);
+      if (existed.length) {
+        if (p) await this.addToPlaylist(p, existed);
+        else ui.toast(existed.length > 1 ? `${existed.length} bài đã có trong thư viện` : 'Bài này đã có trong thư viện');
+      }
+      if (!items.length) { if (!existed.length) ui.toast('Bài này đang được tải'); return; }
       const jobs = await api('/api/import', { method: 'POST', body: { items, playlistId } });
       for (const j of jobs) this.onJob(j);
       useUi().jobsOpen = true;
