@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { api } from '../api.js';
-import { fold } from '../utils.js';
+import { fold, hourKey } from '../utils.js';
 import { useUi } from './ui.js';
 
 // Lấy id video YouTube từ link (watch?v=, youtu.be/, shorts/, music.youtube...)
@@ -67,8 +67,10 @@ export const useLibrary = defineStore('library', {
     },
     async uploadCover(t, file) { Object.assign(t, await api(`/api/tracks/${t.id}/cover`, { method: 'POST', body: file, raw: true })); },
     markPlayed(t) {
+      const day = hourKey();
       t.playCount = (t.playCount || 0) + 1; t.lastPlayedAt = Date.now();
-      api(`/api/tracks/${t.id}/play`, { method: 'POST' }).catch(() => {});
+      t.plays = { ...(t.plays || {}), [day]: ((t.plays || {})[day] || 0) + 1 };
+      api(`/api/tracks/${t.id}/play`, { method: 'POST', body: { day } }).catch(() => {});
     },
     // Xóa có Hoàn tác: chờ 5s mới gọi API thật
     deleteTrack(t) {

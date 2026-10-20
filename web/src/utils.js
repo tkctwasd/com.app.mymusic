@@ -40,3 +40,6 @@ export const hashColor = (s = '') => {
 
 export const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
 export const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+// Khóa ngày theo giờ địa phương: 'YYYY-MM-DD'
+export const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export const hourKey = (d = new Date()) => `${dayKey(d)} ${String(d.getHours()).padStart(2, '0')}`;

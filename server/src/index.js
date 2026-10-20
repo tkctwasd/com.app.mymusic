@@ -47,7 +47,11 @@ app.patch('/api/tracks/:id', wrap(async (req, res) => {
 app.post('/api/tracks/:id/play', wrap(async (req, res) => {
   const t = await Tracks.get(req.params.id);
   if (!t) return res.sendStatus(404);
-  res.json(await Tracks.update(t.id, { playCount: (t.playCount || 0) + 1, lastPlayedAt: Date.now() }));
+  // Lượt nghe theo giờ 'YYYY-MM-DD HH' (giờ máy người nghe), giữ 7 ngày gần nhất cho bảng xếp hạng
+  const day = /^\d{4}-\d{2}-\d{2}( \d{2})?$/.test(req.body?.day) ? req.body.day : new Date().toISOString().slice(0, 13).replace('T', ' ');
+  const plays = { ...(t.plays || {}), [day]: ((t.plays || {})[day] || 0) + 1 };
+  const keep = Object.keys(plays).sort().slice(-168);
+  res.json(await Tracks.update(t.id, { playCount: (t.playCount || 0) + 1, lastPlayedAt: Date.now(), plays: Object.fromEntries(keep.map((k) => [k, plays[k]])) }));
 }));
 
 // Upload ảnh bìa: body là file ảnh thô (Content-Type: image/*)

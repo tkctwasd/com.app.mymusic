@@ -6,6 +6,7 @@ import Cover from '../components/ui/Cover.vue';
 import Card from '../components/media/Card.vue';
 import Shelf from '../components/media/Shelf.vue';
 import EqBars from '../components/media/EqBars.vue';
+import TopChart from '../components/media/TopChart.vue';
 import { useLibrary } from '../stores/library.js';
 import { usePlayer } from '../stores/player.js';
 import { useUi } from '../stores/ui.js';
@@ -130,6 +131,7 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
         <Card v-for="a in lib.albums.slice(0, 14)" :key="a.artist + a.name" :to="albumPath(a)" :title="a.name" :sub="a.artist" :cover="a.coverUrl" vinyl
           :playing="ctxPlaying(albumPath(a))" :active="ctxActive(albumPath(a))" @play="player.toggleContext(a.tracks, { name: a.name, path: albumPath(a) })" />
       </Shelf>
+      <TopChart />
     </template>
   </div>
 </template>
