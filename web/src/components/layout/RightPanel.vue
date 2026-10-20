@@ -70,7 +70,7 @@ const titles = { now: 'Đang phát', queue: 'Hàng đợi', lyrics: 'Lời bài 
       </template>
       <template v-if="player.upcoming.manual.length">
         <div class="row-head"><h3>Tiếp theo trong hàng đợi</h3><button class="link small" @click="player.upNext = []">Xóa hàng đợi</button></div>
-        <div v-for="(q, i) in player.upcoming.manual" :key="'m' + i + q.id" class="q-item" :class="{ over: manualDnD.overIndex.value === i }"
+        <div v-for="(q, i) in player.upcoming.manual" :key="'m' + i + q.id" class="q-item" :style="manualDnD.styleOf(i)"
           v-bind="manualDnD.bind(i, [q.id])" @dblclick="player.jumpManual(i)" @contextmenu="trackMenu($event, q)">
           <Cover :src="q.coverUrl" :size="96" class="sm-cv" />
           <div class="meta"><div class="ellipsis">{{ q.title }}</div><small class="muted ellipsis">{{ q.artist }}</small></div>
@@ -79,7 +79,7 @@ const titles = { now: 'Đang phát', queue: 'Hàng đợi', lyrics: 'Lời bài 
       </template>
       <template v-if="player.upcoming.context.length">
         <div class="row-head"><h3>Tiếp theo từ: {{ player.context?.name || 'Danh sách' }}</h3><button class="link small" @click="player.clearQueue()">Xóa</button></div>
-        <div v-for="(q, i) in player.upcoming.context.slice(0, 100)" :key="'c' + i + q.id" class="q-item" :class="{ over: ctxDnD.overIndex.value === i }"
+        <div v-for="(q, i) in player.upcoming.context.slice(0, 100)" :key="'c' + i + q.id" class="q-item" :style="ctxDnD.styleOf(i)"
           v-bind="ctxDnD.bind(i, [q.id])" @dblclick="player.jumpContext(i)" @contextmenu="trackMenu($event, q)">
           <Cover :src="q.coverUrl" :size="96" class="sm-cv" />
           <div class="meta"><div class="ellipsis">{{ q.title }}</div><small class="muted ellipsis">{{ q.artist }}</small></div>

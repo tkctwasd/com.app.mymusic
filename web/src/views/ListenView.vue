@@ -119,19 +119,19 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
           :mosaic="lib.playlistTracks(p).map((x) => x.coverUrl).filter(Boolean)" :playing="ctxPlaying(`/playlist/${p.id}`)" :active="ctxActive(`/playlist/${p.id}`)"
           @play="player.toggleContext(lib.playlistTracks(p), { name: p.name, path: `/playlist/${p.id}` })" @drop-ids="lib.addToPlaylist(p, $event)" />
       </Shelf>
-      <Shelf v-if="topTracks.length" title="Nghe nhiều nhất">
-        <Card v-for="x in topTracks" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="`${x.artist} · ${x.playCount} lượt`" :cover="x.coverUrl"
-          :playing="player.isCurrent(x) && player.playing" :active="player.isCurrent(x)" @play="playTrack(x, topTracks, { name: 'Nghe nhiều nhất', path: '/' })" />
-      </Shelf>
-      <Shelf v-if="lib.artists.length" title="Nghệ sĩ của bạn">
-        <Card v-for="a in lib.artists.slice(0, 14)" :key="a.name" :to="artistPath(a)" :title="a.name" :sub="`${a.tracks.length} bài`" :cover="a.coverUrl" round icon="artist"
-          :playing="ctxPlaying(artistPath(a))" :active="ctxActive(artistPath(a))" @play="player.toggleContext(a.tracks, { name: a.name, path: artistPath(a) })" />
-      </Shelf>
       <Shelf v-if="lib.albums.length" title="Album">
         <Card v-for="a in lib.albums.slice(0, 14)" :key="a.artist + a.name" :to="albumPath(a)" :title="a.name" :sub="a.artist" :cover="a.coverUrl" vinyl
           :playing="ctxPlaying(albumPath(a))" :active="ctxActive(albumPath(a))" @play="player.toggleContext(a.tracks, { name: a.name, path: albumPath(a) })" />
       </Shelf>
+      <Shelf v-if="topTracks.length" title="Nghe nhiều nhất">
+        <Card v-for="x in topTracks" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="`${x.artist} · ${x.playCount} lượt`" :cover="x.coverUrl"
+          :playing="player.isCurrent(x) && player.playing" :active="player.isCurrent(x)" @play="playTrack(x, topTracks, { name: 'Nghe nhiều nhất', path: '/' })" />
+      </Shelf>
       <TopChart />
+      <Shelf v-if="lib.artists.length" title="Nghệ sĩ của bạn">
+        <Card v-for="a in lib.artists.slice(0, 14)" :key="a.name" :to="artistPath(a)" :title="a.name" :sub="`${a.tracks.length} bài`" :cover="a.coverUrl" round icon="artist"
+          :playing="ctxPlaying(artistPath(a))" :active="ctxActive(artistPath(a))" @play="player.toggleContext(a.tracks, { name: a.name, path: artistPath(a) })" />
+      </Shelf>
     </template>
   </div>
 </template>

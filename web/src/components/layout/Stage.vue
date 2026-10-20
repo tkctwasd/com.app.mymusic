@@ -143,7 +143,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFs));
 
             <template v-if="player.upcoming.manual.length">
               <div class="q-head"><h3>Tiếp theo (bạn thêm)</h3><button class="link" @click="player.upNext = []">Xóa</button></div>
-              <div v-for="(q, i) in player.upcoming.manual" :key="'m' + i + q.id" class="q-item" :class="{ over: manualDnD.overIndex.value === i }"
+              <div v-for="(q, i) in player.upcoming.manual" :key="'m' + i + q.id" class="q-item" :style="manualDnD.styleOf(i)"
                 v-bind="manualDnD.bind(i, [q.id])" @click="player.jumpManual(i)" @contextmenu="trackMenu($event, q)">
                 <span class="grip" v-bind="manualDnD.handle(i)" @click.stop><Icon name="grip" size="16" /></span>
                 <Cover :src="q.coverUrl" :size="96" class="sm-cv" />
@@ -153,7 +153,7 @@ onBeforeUnmount(() => document.removeEventListener('fullscreenchange', onFs));
             </template>
             <template v-if="player.upcoming.context.length">
               <div class="q-head"><h3 class="ellipsis">Từ: {{ player.context?.name || 'Danh sách' }}</h3><button class="link" @click="player.clearQueue()">Xóa</button></div>
-              <div v-for="(q, i) in player.upcoming.context.slice(0, 100)" :key="'c' + i + q.id" class="q-item" :class="{ over: ctxDnD.overIndex.value === i }"
+              <div v-for="(q, i) in player.upcoming.context.slice(0, 100)" :key="'c' + i + q.id" class="q-item" :style="ctxDnD.styleOf(i)"
                 v-bind="ctxDnD.bind(i, [q.id])" @click="player.jumpContext(i)" @contextmenu="trackMenu($event, q)">
                 <span class="grip" v-bind="ctxDnD.handle(i)" @click.stop><Icon name="grip" size="16" /></span>
                 <Cover :src="q.coverUrl" :size="96" class="sm-cv" />

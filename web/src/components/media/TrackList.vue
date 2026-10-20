@@ -91,13 +91,13 @@ function swipeQueue(t) { swipeOpen.value = null; player.addToQueue(t.id); ui.toa
 
 <template>
   <div class="tl" :class="{ selecting: ui.selection.length }" role="list">
-    <div v-for="(t, i) in tracks" :key="t.id + i" class="wrap" role="listitem">
+    <div v-for="(t, i) in tracks" :key="t.id + i" class="wrap" role="listitem" :style="dnd.styleOf(i)">
       <div v-if="ui.isMobile && rowShift(i)" class="swipe-acts">
         <button class="sa q" @click="swipeQueue(t)"><Icon name="queue" size="18" />Hàng đợi</button>
         <button class="sa del" @click="swipeRemove(t)"><Icon :name="playlist ? 'minus' : 'trash'" size="18" />{{ playlist ? 'Bỏ ra' : 'Xóa' }}</button>
       </div>
       <div class="row"
-        :class="{ cur: isCur(t), sel: selected.has(t.id), over: dnd.overIndex.value === i && dnd.dragFrom.value !== i }"
+        :class="{ cur: isCur(t), sel: selected.has(t.id) }"
         :style="{ transform: rowShift(i) ? `translateX(${rowShift(i)}px)` : '', transition: swipeIdx === i ? 'none' : '' }"
         v-bind="ui.isMobile ? { 'data-sort-g': dnd.gid, 'data-sort-i': i } : dragBind(i, t)"
         @click="onClick($event, i)" @contextmenu="trackMenu($event, t, { playlist })"

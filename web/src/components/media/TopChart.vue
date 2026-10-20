@@ -12,12 +12,12 @@ import { dayKey } from '../../utils.js';
 const lib = useLibrary(), player = usePlayer(), trackMenu = useTrackMenu();
 const COLORS = ['#f5b841', '#34c98e', '#4a9dff']; // top 1 vàng, top 2 xanh lá, top 3 xanh dương
 const POINTS = 7;
-const W = 640, H = 220, PAD = { l: 14, r: 14, t: 56, b: 12 };
+const W = 640, H = 220, PAD = { l: 22, r: 22, t: 56, b: 12 };
 
 const now = ref(new Date());
 const buckets = computed(() => Array.from({ length: POINTS }, (_, i) => {
   const d = new Date(now.value); d.setDate(d.getDate() - (POINTS - 1 - i));
-  return { key: dayKey(d), label: i === POINTS - 1 ? 'Hôm nay' : `${d.getDate()}/${d.getMonth() + 1}` };
+  return { key: dayKey(d), label: `${d.getDate()}/${d.getMonth() + 1}` };
 }));
 // Lượt nghe trong 1 ngày (khóa theo giờ 'YYYY-MM-DD HH' hoặc theo ngày 'YYYY-MM-DD').
 // Lượt nghe cũ (trước khi có thống kê theo ngày) được tính vào ngày trước lượt có thống kê đầu tiên
@@ -67,15 +67,22 @@ const peak = computed(() => {
   return { left: `${(px(i) / W) * 100}%`, top: `${(py(v[i] || 0) / H) * 100}%` };
 });
 
-// Rê chuột / chạm: chọn mốc gần nhất
-const hover = ref(-1);
+// Rê chuột / chạm: chọn mốc gần nhất và đường gần ngón tay nhất -> chỉ hiện thông tin của đường đó
+const hover = ref(-1), hoverLine = ref(0);
 const svgEl = ref(null);
 function onMove(e) {
-  const r = svgEl.value.getBoundingClientRect();
-  const x = (((e.touches?.[0] || e).clientX - r.left) / r.width) * W;
-  hover.value = Math.max(0, Math.min(POINTS - 1, Math.round(((x - PAD.l) / (W - PAD.l - PAD.r)) * (POINTS - 1))));
+  const r = svgEl.value.getBoundingClientRect(), p = e.touches?.[0] || e;
+  const x = ((p.clientX - r.left) / r.width) * W, y = ((p.clientY - r.top) / r.height) * H;
+  const i = Math.max(0, Math.min(POINTS - 1, Math.round(((x - PAD.l) / (W - PAD.l - PAD.r)) * (POINTS - 1))));
+  hover.value = i;
+  // Các đường trùng nhau thì ưu tiên hạng cao hơn
+  hoverLine.value = series.value.reduce((m, v, k) => (Math.abs(py(v[i]) - y) < Math.abs(py(series.value[m][i]) - y) - 4 ? k : m), 0);
 }
-const tipLeft = computed(() => `${Math.min(80, Math.max(20, (px(hover.value) / W) * 100))}%`);
+// Neo tooltip theo mép để không tràn ra ngoài khung
+const tipStyle = computed(() => {
+  const f = px(hover.value) / W;
+  return f > 0.6 ? { right: `${(1 - f) * 100}%` } : f < 0.4 ? { left: `${f * 100}%` } : { left: `${f * 100}%`, transform: 'translateX(-50%)' };
+});
 const stamp = computed(() => now.value.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', ' -'));
 
 const list = computed(() => top.value.map((x) => x.t));
@@ -87,14 +94,14 @@ const play = (t) => (player.isCurrent(t) ? player.toggle() : player.playTracks(l
   <section v-if="top.length" class="zc" :style="{ '--c1': COLORS[0], '--c2': COLORS[1], '--c3': COLORS[2] }" @mouseenter="now = new Date()">
     <div class="ch-head">
       <h2 class="ttl">#bảng xếp hạng</h2>
-      <span class="stamp">{{ stamp }}</span>
       <button class="play-all" aria-label="Phát bảng xếp hạng" @click="play(list[0])"><Icon name="play" size="16" /></button>
+      <span class="stamp">{{ stamp }}</span>
     </div>
 
     <div class="plot" @mouseleave="hover = -1">
       <div class="area">
         <svg ref="svgEl" :viewBox="`0 0 ${W} ${H}`" preserveAspectRatio="none" role="img" aria-label="Lượt nghe theo ngày của top 3"
-          @mousemove="onMove" @touchstart.passive="onMove" @touchmove.passive="onMove" @touchend="hover = -1">
+          @mousemove="onMove" @click="onMove" @touchstart.passive="onMove" @touchmove.passive="onMove">
           <line v-for="g in 3" :key="g" class="grid" :x1="PAD.l" :x2="W - PAD.r" :y1="py((maxY / 3) * g)" :y2="py((maxY / 3) * g)" />
           <line class="base" :x1="PAD.l" :x2="W - PAD.r" :y1="py(0)" :y2="py(0)" />
           <line v-if="hover >= 0" class="cross" :x1="px(hover)" :x2="px(hover)" :y1="PAD.t - 20" :y2="py(0)" />
@@ -103,12 +110,15 @@ const play = (t) => (player.isCurrent(t) ? player.toggle() : player.playTracks(l
             :stroke-width="k ? 2 : 3" class="ln" :style="{ '--c': COLORS[k], stroke: COLORS[k] }" />
         </svg>
         <!-- Chấm (HTML để không bị méo khi SVG co giãn): điểm cuối của mỗi đường, hoặc mốc đang rê chuột -->
-        <span v-for="k in [2, 1, 0].filter((k) => series[k])" :key="'d' + k" class="dot" :class="{ on: hover >= 0 }"
+        <span v-for="(b, i) in buckets" :key="'t' + i" class="tick" :style="{ left: `${(px(i) / W) * 100}%`, top: `${(py(0) / H) * 100}%` }" />
+        <span v-for="k in [2, 1, 0].filter((k) => series[k] && (hover < 0 || k === hoverLine))" :key="'d' + k" class="dot" :class="{ on: hover >= 0 }"
           :style="{ left: `${(px(hover >= 0 ? hover : POINTS - 1) / W) * 100}%`, top: `${(py(series[k][hover >= 0 ? hover : POINTS - 1]) / H) * 100}%`, '--c': COLORS[k] }" />
         <div v-if="series[0]?.some(Boolean) && hover < 0" class="bubble" :style="peak"><Cover :src="hot[0].t.coverUrl" :size="96" class="bcv" /></div>
-        <div v-if="hover >= 0" class="tip" :style="{ left: tipLeft }">
-          <b>{{ buckets[hover].label }}</b>
-          <div v-for="(x, k) in hot" :key="x.t.id" class="tr"><i :style="{ background: COLORS[k] }" /><span class="ellipsis">{{ x.t.title }}</span><b>{{ series[k][hover] }} lượt</b></div>
+        <div v-if="hover >= 0 && hot[hoverLine]" class="tip" :style="tipStyle">
+          <small>{{ buckets[hover].label }} · hạng {{ hoverLine + 1 }}</small>
+          <div class="tr"><i :style="{ background: COLORS[hoverLine] }" /><span class="ellipsis">{{ hot[hoverLine].t.title }}</span></div>
+          <small class="ellipsis">{{ hot[hoverLine].t.artist }}</small>
+          <b class="tn">{{ series[hoverLine][hover] }} lượt nghe</b>
         </div>
       </div>
       <div class="xlab"><span v-for="(b, i) in buckets" :key="b.key" :style="{ left: `${(px(i) / W) * 100}%` }">{{ b.label }}</span></div>
@@ -139,7 +149,7 @@ const play = (t) => (player.isCurrent(t) ? player.toggle() : player.playTracks(l
   background: linear-gradient(170deg, color-mix(in oklab, var(--accent) 14%, var(--bg)), var(--bg) 75%); }
 .ch-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ttl { font-size: clamp(24px, 3.6vw, 32px); font-weight: 800; letter-spacing: -.5px; color: var(--accent); }
-.stamp { margin-left: auto; font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.stamp { flex-basis: 100%; font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .play-all { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
 .plot { position: relative; margin: 6px -4px 0; }
 .area { position: relative; height: 220px; }
@@ -152,14 +162,14 @@ const play = (t) => (player.isCurrent(t) ? player.toggle() : player.playTracks(l
 .dot.on { transform: scale(1.35); }
 .bubble { position: absolute; transform: translate(-50%, calc(-100% - 14px)); display: flex; align-items: flex-end; gap: 4px; pointer-events: none; }
 .bcv { width: 44px; --cover-r: 8px; border: 2px solid var(--c1); border-radius: 10px; box-shadow: 0 6px 18px rgb(0 0 0 / .25); }
-.tip { position: absolute; top: 0; transform: translateX(-50%); width: 210px; padding: 8px 10px; border-radius: 12px; background: var(--surface-3); border: 1px solid var(--line); box-shadow: 0 6px 20px rgb(0 0 0 / .2); font-size: 12px; pointer-events: none; z-index: 3; }
-.tip .tr { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--text-2); }
+.tip { position: absolute; top: 0; width: min(220px, 70%); display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--surface-3); border: 1px solid var(--line); box-shadow: 0 6px 20px rgb(0 0 0 / .2); font-size: 12px; pointer-events: none; z-index: 3; }
+.tip .tr { display: flex; align-items: center; gap: 6px; color: var(--text); font-weight: 600; font-size: 13px; }
+.tip small { color: var(--text-2); }
+.tip .tn { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+.tick { position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--text-3); pointer-events: none; }
 .tip .tr span { flex: 1; min-width: 0; }
-.tip .tr b { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .xlab { position: relative; height: 18px; margin-top: 8px; font-size: 12px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .xlab span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
-.xlab span:first-child { transform: none; }
-.xlab span:last-child { transform: translateX(-100%); }
 i { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 .rank { list-style: none; margin: 8px -10px 0; padding: 0; display: flex; flex-direction: column; }
 .rank li { display: flex; align-items: center; gap: 14px; padding: 9px 10px; border-radius: 14px; cursor: pointer; transition: background .2s; }
