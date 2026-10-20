@@ -116,7 +116,7 @@ const suggestions = computed(() => {
 
       <div class="bar">
         <label class="filter"><Icon name="search" size="16" /><input v-model="filterQ" placeholder="Lọc trong danh sách" /></label>
-        <button class="btn btn-outline sm" @click="sortMenu"><Icon name="sort" size="15" /> {{ sorts[sortBy] }}</button>
+        <button class="btn btn-outline sm" @click="sortMenu"><Icon name="sort" size="15" /><span class="sort-l">{{ sorts[sortBy] }}</span></button>
       </div>
 
       <TrackList v-if="shown.length" :tracks="shown" :context="context" :playlist="playlist" :sortable="sortable" :show-album="kind !== 'album'" />
@@ -188,7 +188,9 @@ h1.long { font-size: clamp(24px, 3vw, 38px); }
   .cv { width: min(62vw, 240px); }
   .acts { justify-content: center; }
   .bar { justify-content: stretch; }
-  .filter { flex: 1; width: auto; }
+  .filter { flex: 1; width: auto; min-width: 0; }
+  .bar .sm { width: 38px; height: 38px; padding: 0; flex-shrink: 0; justify-content: center; }
+  .sort-l { display: none; }
   .alb { display: none; }
 }
 </style>
