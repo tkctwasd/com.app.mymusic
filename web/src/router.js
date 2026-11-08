@@ -8,6 +8,7 @@ export default createRouter({
     { path: '/explore', name: 'explore', component: () => import('./views/ExploreView.vue') },
     { path: '/liked', name: 'liked', component: () => import('./views/CollectionView.vue'), props: { kind: 'liked' } },
     { path: '/songs', name: 'songs', component: () => import('./views/CollectionView.vue'), props: { kind: 'all' } },
+    { path: '/offline', name: 'offline', component: () => import('./views/OfflineView.vue') },
     { path: '/playlist/:id', name: 'playlist', component: () => import('./views/CollectionView.vue'), props: (r) => ({ kind: 'playlist', id: r.params.id }) },
     { path: '/album/:artist/:name', name: 'album', component: () => import('./views/CollectionView.vue'), props: (r) => ({ kind: 'album', id: r.params.name, artist: r.params.artist }) },
     { path: '/artist/:name', name: 'artist', component: () => import('./views/ArtistView.vue'), props: true },

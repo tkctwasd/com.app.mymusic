@@ -78,7 +78,7 @@ li.sep { height: 1px; padding: 0; margin: 4px 6px; background: var(--line); poin
     border-radius: 22px 22px 0 0; padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
     max-height: 72vh; overflow-y: auto; animation: sheet .28s var(--spring);
   }
-  .ctx:not(.sub) li { min-height: 44px; }
+  .ctx:not(.sub) li:not(.sep) { min-height: 44px; } /* không áp cho dải phân cách, nếu không nó bị kéo thành khối 44px */
 }
 @keyframes sheet { from { transform: translateY(100%); } }
 </style>

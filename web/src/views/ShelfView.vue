@@ -13,6 +13,7 @@ import { useUi } from '../stores/ui.js';
 import { useMenus } from '../composables/useMenus.js';
 import { fold, load, save } from '../utils.js';
 import { DRAG_MIME } from '../composables/useDragSort.js';
+import { offline } from '../offline.js';
 
 const lib = useLibrary(), player = usePlayer(), ui = useUi(), router = useRouter();
 const { playlistMenu } = useMenus();
@@ -113,6 +114,7 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
           :playing="ctxPlaying('/liked')" :active="ctxActive('/liked')" @play="player.toggleContext(lib.liked, { name: 'Bài hát đã thích', path: '/liked' })" @drop-ids="likeIds" />
         <Card to="/songs" title="Tất cả bài hát" :sub="`${lib.tracks.length} bài`" icon="music" :mosaic="lib.tracks.slice(0, 4).map((t) => t.coverUrl).filter(Boolean)"
           :playing="ctxPlaying('/songs')" :active="ctxActive('/songs')" @play="player.toggleContext(lib.tracks, { name: 'Tất cả bài hát', path: '/songs' })" />
+        <Card to="/offline" title="Nghe offline" :sub="`${offline.ids.length} bài đã tải về máy`" icon="download" />
       </template>
       <div v-for="it in items" :key="it.key" class="cell" :class="{ pinned: it.pinned }" @contextmenu="menu($event, it)">
         <Card :to="it.path" :title="it.name" :sub="it.sub" :cover="it.cover" :mosaic="it.mosaic" :round="it.round" :icon="it.kind === 'artist' ? 'artist' : 'music'"
@@ -128,6 +130,7 @@ const canDrop = (e, it) => (it === 'liked' || it.kind === 'playlist') && e.dataT
           <Cover liked class="lcv" /><div class="lm"><b class="ellipsis">Bài hát đã thích</b><small><Icon name="pin" size="12" class="pin-i" /> {{ lib.liked.length }} bài</small></div>
         </RouterLink>
         <RouterLink to="/songs" class="li"><Cover icon="music" class="lcv" /><div class="lm"><b class="ellipsis">Tất cả bài hát</b><small><Icon name="pin" size="12" class="pin-i" /> {{ lib.tracks.length }} bài</small></div></RouterLink>
+        <RouterLink to="/offline" class="li"><Cover icon="download" class="lcv" /><div class="lm"><b class="ellipsis">Nghe offline</b><small><Icon name="pin" size="12" class="pin-i" /> {{ offline.ids.length }} bài đã tải về máy</small></div></RouterLink>
       </template>
       <RouterLink v-for="it in items" :key="it.key" :to="it.path" class="li" :class="{ drop: dropKey === it.key, on: ctxActive(it.path) }"
         @contextmenu="menu($event, it)" @dragover="canDrop($event, it) && ($event.preventDefault(), dropKey = it.key)" @dragleave="dropKey = null" @drop="rowDrop($event, it)">
