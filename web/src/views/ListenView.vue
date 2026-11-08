@@ -147,6 +147,8 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
 
 <style scoped>
 .mix-row { display: flex; margin: 20px 0 0; }
+.mix-row .chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; }
+.mix-row .chip :deep(svg) { flex-shrink: 0; }
 .listen { padding-top: 12px; }
 .welcome { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .orb { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 12px color-mix(in oklab, var(--accent) 6%, transparent); margin-bottom: 8px; }
