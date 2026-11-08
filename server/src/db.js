@@ -8,6 +8,7 @@ function jsonRepos() {
   const FILE = path.resolve('data/db.json');
   fs.mkdirSync(path.dirname(FILE), { recursive: true });
   const state = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : { tracks: [], playlists: [] };
+  state.jobs ||= []; // file cũ chưa có mục jobs
   const save = () => fs.writeFileSync(FILE, JSON.stringify(state, null, 2));
 
   const repo = (name) => {
@@ -33,9 +34,15 @@ function jsonRepos() {
         for (const d of list()) if (d[field]?.includes(value)) d[field] = d[field].filter((x) => x !== value);
         save();
       },
+      // Thêm nếu chưa có, ghi đè nếu đã có (theo id)
+      async upsert(doc) {
+        const i = list().findIndex((x) => x.id === doc.id);
+        if (i < 0) list().push(doc); else list()[i] = { ...list()[i], ...doc };
+        save(); return doc;
+      },
     };
   };
-  return { tracks: repo('tracks'), playlists: repo('playlists') };
+  return { tracks: repo('tracks'), playlists: repo('playlists'), jobs: repo('jobs') };
 }
 
 async function mongoRepos(uri) {
@@ -65,12 +72,14 @@ async function mongoRepos(uri) {
       },
       async remove(id) { return strip(await col.findOneAndDelete({ id })); },
       async pullFromAll(field, value) { await col.updateMany({ [field]: value }, { $pull: { [field]: value } }); },
+      async upsert(doc) { await col.updateOne({ id: doc.id }, { $set: doc }, { upsert: true }); return doc; },
     };
   };
   console.log('DB: MongoDB');
-  return { tracks: repo('tracks'), playlists: repo('playlists') };
+  return { tracks: repo('tracks'), playlists: repo('playlists'), jobs: repo('jobs') };
 }
 
 const repos = process.env.MONGODB_URI ? await mongoRepos(process.env.MONGODB_URI) : (console.log('DB: JSON local'), jsonRepos());
 export const Tracks = repos.tracks;
 export const Playlists = repos.playlists;
+export const Jobs = repos.jobs; // hàng đợi import, lưu để không mất khi server khởi động lại

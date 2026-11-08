@@ -188,9 +188,10 @@ export const useLibrary = defineStore('library', {
       ui.pulse = Date.now();
       if (t) ui.toast(`Đã thêm "${t.title}" vào thư viện`, { label: 'Phát', fn: () => import('./player.js').then(({ usePlayer }) => usePlayer().playTracks([t], 0)) });
     },
-    listenJobs(token) {
+    // Xác thực SSE bằng cookie httpOnly (đã gắn ở /api/session), không đưa token lên URL
+    listenJobs() {
       api('/api/import/jobs').then((js) => { this.jobs = js.reverse(); }).catch(() => {});
-      const es = new EventSource(`/api/import/events?token=${encodeURIComponent(token)}`);
+      const es = new EventSource('/api/import/events');
       es.onmessage = (e) => this.onJob(JSON.parse(e.data));
       return es;
     },

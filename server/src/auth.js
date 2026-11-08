@@ -26,7 +26,19 @@ export function verify(token = '') {
   return safeEq(sig, sign(exp)) && +exp > Date.now();
 }
 
+// Token nằm trong header Authorization (fetch) hoặc cookie httpOnly (EventSource/SSE).
+// Không nhận token trên query string để tránh bị ghi vào log.
+const COOKIE = 'mm_token';
+export const bearer = (req) => req.get('authorization')?.replace(/^Bearer /, '') || '';
+const cookieToken = (req) => (req.headers.cookie || '').split(';').map((c) => c.trim())
+  .find((c) => c.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1) || '';
+
+export function setSession(req, res, token) {
+  if (!authEnabled || !token) return;
+  res.cookie(COOKIE, token, { httpOnly: true, sameSite: 'strict', secure: req.secure, maxAge: TTL, path: '/api' });
+}
+
 export function requireAuth(req, res, next) {
-  const token = req.get('authorization')?.replace(/^Bearer /, '') || req.query.token;
+  const token = bearer(req) || cookieToken(req);
   verify(token) ? next() : res.status(401).json({ error: 'Chưa đăng nhập' });
 }

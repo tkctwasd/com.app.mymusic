@@ -13,8 +13,8 @@ Thứ tự ưu tiên từ trên xuống. Các mục chưa test trên iPhone th�
 - [ ] Đo trước và sau bằng Lighthouse / DevTools Network để so sánh.
 
 ## 2. Server và triển khai (Render)
-- [ ] Cài sẵn yt-dlp trong [Dockerfile](Dockerfile), ghim phiên bản, bỏ `pip install -U` lúc khởi động.
-- [ ] Chuyển job import từ bộ nhớ sang DB (collection `jobs`) để không mất khi restart.
+- [x] Cài sẵn yt-dlp trong [Dockerfile](Dockerfile), ghim phiên bản, bỏ `pip install -U` lúc khởi động.
+- [x] Chuyển job import từ bộ nhớ sang DB (collection `jobs`) để không mất khi restart.
 - [ ] Kiểm tra `CLOUDINARY_URL` đã được set trên Render.
 - [ ] Cân nhắc gói Render không ngủ nếu dùng hằng ngày.
 
@@ -32,15 +32,15 @@ Thứ tự ưu tiên từ trên xuống. Các mục chưa test trên iPhone th�
 ## 5. Giao diện trên điện thoại
 - [ ] Splash screen iOS (`apple-touch-startup-image`) để không hiện màn hình trống khi mở app.
 - [x] Bọc hiệu ứng `:hover` trong `@media (hover: hover)` để không bị dính sau khi chạm.
-- [ ] Vùng bấm tối thiểu 44px trên điện thoại (`.icon-btn` hiện 36px).
+- [x] Vùng bấm tối thiểu 44px trên điện thoại (`.icon-btn` hiện 36px).
 - [x] Dùng `100dvh` có fallback thay cho `100vh` trong [base.css](web/src/styles/base.css).
 - [ ] Menu trên điện thoại dùng bottom sheet thay cho menu ngữ cảnh.
 - [ ] Skeleton và trạng thái rỗng/đang tải thống nhất.
-- [ ] Hỗ trợ `prefers-reduced-motion`.
+- [x] Hỗ trợ `prefers-reduced-motion`.
 - [ ] Màn hình đang phát rút gọn điều khiển, ưu tiên ảnh bìa.
 
 ## 6. Bảo mật
-- [ ] Chuyển token SSE khỏi query string ([library.js](web/src/stores/library.js)) sang cookie hoặc cách khác, tránh ghi vào log.
+- [x] Chuyển token SSE khỏi query string ([library.js](web/src/stores/library.js)) sang cookie hoặc cách khác, tránh ghi vào log.
 - [ ] Thêm rate limit cho `/api/login`.
 - [ ] Cân nhắc URL nhạc Cloudinary là public: đánh giá rủi ro nếu URL bị lộ.
 

@@ -59,7 +59,9 @@ async function boot() {
     await lib.load();
     startPlayer();
     es?.close();
-    es = lib.listenJobs(auth.token);
+    // Gắn cookie phiên cho kết nối SSE (token không nằm trên URL)
+    if (required) await api('/api/session', { method: 'POST' }).catch(() => {});
+    es = lib.listenJobs();
     state.value = 'ready';
   } catch (e) {
     // Đang hiện thư viện từ cache thì giữ nguyên, chỉ báo nhỏ; không có cache thì mới hiện lỗi

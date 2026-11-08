@@ -7,10 +7,11 @@ import crypto from 'node:crypto';
 import { Tracks, Playlists } from './db.js';
 import { storage } from './storage.js';
 import { preview, YT_RE, cleanTitle, singleVideoUrl } from './youtube.js';
-import { addJob, listJobs, retryJob, clearFinished, subscribe } from './jobs.js';
-import { authEnabled, login, requireAuth } from './auth.js';
+import { addJob, listJobs, retryJob, clearFinished, subscribe, restoreJobs } from './jobs.js';
+import { authEnabled, login, requireAuth, setSession, verify, bearer } from './auth.js';
 
 const app = express();
+app.set('trust proxy', 1); // sau proxy của Render: để biết kết nối là HTTPS (cookie Secure)
 // Nén gzip/br cho JSON, HTML, JS, CSS. Không nén luồng SSE (sẽ bị giữ lại không gửi ngay).
 app.use(compression({ filter: (req, res) => !String(res.getHeader('Content-Type') || '').includes('text/event-stream') && compression.filter(req, res) }));
 app.use(express.json({ limit: '1mb' }));
@@ -29,7 +30,16 @@ app.get('/api/version', (req, res) => {
 });
 app.post('/api/login', (req, res) => {
   const token = login(req.body.password);
-  token ? res.json({ token }) : res.status(401).json({ error: 'Sai mật khẩu' });
+  if (!token) return res.status(401).json({ error: 'Sai mật khẩu' });
+  setSession(req, res, token);
+  res.json({ token });
+});
+// Gắn cookie phiên (httpOnly) từ token Bearer hiện có, dùng cho SSE vì EventSource không gửi được header
+app.post('/api/session', (req, res) => {
+  const token = bearer(req);
+  if (!verify(token)) return res.status(401).json({ error: 'Chưa đăng nhập' });
+  setSession(req, res, token);
+  res.sendStatus(204);
 });
 app.use('/api', requireAuth);
 
@@ -154,4 +164,5 @@ app.use(express.static(dist));
 app.get(/^(?!\/(api|media)\/).*/, (req, res) => (fs.existsSync(dist) ? res.sendFile(path.join(dist, 'index.html')) : res.status(404).send('Chưa build frontend: cd web && npm run build')));
 
 const port = process.env.PORT || 3000;
+await restoreJobs(); // đưa lại các job dở dang trước khi nhận yêu cầu mới
 app.listen(port, () => console.log(`Music app: http://localhost:${port}`));
