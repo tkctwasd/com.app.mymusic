@@ -10,6 +10,7 @@ import TopChart from '../components/media/TopChart.vue';
 import { useLibrary } from '../stores/library.js';
 import { usePlayer } from '../stores/player.js';
 import { useUi } from '../stores/ui.js';
+import { offline } from '../offline.js';
 import { fmtTime, shuffleArr, img } from '../utils.js';
 
 const lib = useLibrary(), player = usePlayer(), ui = useUi();
@@ -109,7 +110,10 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
         </RouterLink>
       </div>
 
-      <div v-if="lib.liked.length" class="mix-row"><button class="chip" @click="mix"><Icon name="shuffle" size="14" /> Mix từ bài đã thích</button></div>
+      <div class="mix-row">
+        <button v-if="lib.liked.length" class="chip" @click="mix"><Icon name="shuffle" size="14" /> Mix từ bài đã thích</button>
+        <RouterLink to="/offline" class="chip"><Icon name="download" size="14" /> Nghe offline<template v-if="offline.ids.length"> ({{ offline.ids.length }})</template></RouterLink>
+      </div>
 
       <Shelf v-if="recent.length" title="Nghe gần đây">
         <Card v-for="x in recent" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="x.artist" :cover="x.coverUrl"
@@ -146,7 +150,7 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
 </template>
 
 <style scoped>
-.mix-row { display: flex; margin: 20px 0 0; }
+.mix-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; }
 .mix-row .chip { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; }
 .mix-row .chip :deep(svg) { flex-shrink: 0; }
 .listen { padding-top: 12px; }
