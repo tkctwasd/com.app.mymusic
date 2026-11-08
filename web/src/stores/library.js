@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { api } from '../api.js';
 import { fold, hourKey } from '../utils.js';
 import { useUi } from './ui.js';
+import { writeLibraryCache } from '../cache.js';
 
 // Lấy id video YouTube từ link (watch?v=, youtu.be/, shorts/, music.youtube...)
 const ytId = (u = '') => /(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/.exec(u)?.[1] || '';
@@ -40,6 +41,13 @@ export const useLibrary = defineStore('library', {
   actions: {
     async load() {
       [this.tracks, this.playlists] = await Promise.all([api('/api/tracks'), api('/api/playlists')]);
+      this.loaded = true;
+      writeLibraryCache({ tracks: this.tracks, playlists: this.playlists });
+    },
+    // Dựng lại thư viện từ cache (không gọi mạng)
+    apply(data) {
+      this.tracks = data.tracks || [];
+      this.playlists = data.playlists || [];
       this.loaded = true;
     },
     playlist(id) { return this.playlists.find((p) => p.id === id); },

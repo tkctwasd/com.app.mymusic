@@ -37,7 +37,7 @@ function load(t) {
   if (pending.has(t.id)) return pending.get(t.id);
   const p = (queue = queue.then(() => compute(t)).then((peaks) => {
     mem.set(t.id, peaks);
-    t.peaks = peaks;
+    t.peaks = peaks; t.hasPeaks = true;
     api(`/api/tracks/${t.id}`, { method: 'PATCH', body: { peaks } }).catch(() => {});
     return peaks;
   }).catch(() => null));
@@ -51,8 +51,13 @@ export function usePeaks(trackSrc) {
   watch(() => toValue(trackSrc)?.id, async () => {
     const t = toValue(trackSrc);
     if (!t) { peaks.value = []; return; }
-    const known = t.peaks?.length ? t.peaks : mem.get(t.id);
-    if (known) { peaks.value = known; real.value = true; return; }
+    let known = t.peaks?.length ? t.peaks : mem.get(t.id);
+    // Danh sách bài không mang peaks nữa (hasPeaks): tải chi tiết một lần rồi nhớ lại
+    if (!known && t.hasPeaks) {
+      known = await api(`/api/tracks/${t.id}`).then((full) => full.peaks || null).catch(() => null);
+      if (known) { t.peaks = known; mem.set(t.id, known); }
+    }
+    if (known) { if (toValue(trackSrc)?.id === t.id) { peaks.value = known; real.value = true; } return; }
     peaks.value = fakePeaks(t.id); real.value = false;
     const p = await load(t);
     if (p && toValue(trackSrc)?.id === t.id) { peaks.value = p; real.value = true; }

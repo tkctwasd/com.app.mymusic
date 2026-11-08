@@ -1,4 +1,5 @@
 import express from 'express';
+import compression from 'compression';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,6 +11,8 @@ import { addJob, listJobs, retryJob, clearFinished, subscribe } from './jobs.js'
 import { authEnabled, login, requireAuth } from './auth.js';
 
 const app = express();
+// Nén gzip/br cho JSON, HTML, JS, CSS. Không nén luồng SSE (sẽ bị giữ lại không gửi ngay).
+app.use(compression({ filter: (req, res) => !String(res.getHeader('Content-Type') || '').includes('text/event-stream') && compression.filter(req, res) }));
 app.use(express.json({ limit: '1mb' }));
 app.use('/media', express.static(storage.root)); // express.static hỗ trợ Range -> tua nhạc được
 
@@ -31,7 +34,17 @@ app.post('/api/login', (req, res) => {
 app.use('/api', requireAuth);
 
 // ---- Tracks ----
-app.get('/api/tracks', wrap(async (req, res) => res.json(await Tracks.all())));
+// Danh sách gọn: bỏ peaks (300 số) và lyrics (văn bản dài). Thay bằng cờ hasPeaks/hasLyrics,
+// client tải chi tiết qua GET /api/tracks/:id khi thật sự cần (waveform, lời bài hát).
+const slim = (t) => {
+  const { peaks, lyrics, ...rest } = t;
+  return { ...rest, hasPeaks: !!peaks?.length, hasLyrics: !!lyrics };
+};
+app.get('/api/tracks', wrap(async (req, res) => res.json((await Tracks.all()).map(slim))));
+app.get('/api/tracks/:id', wrap(async (req, res) => {
+  const t = await Tracks.get(req.params.id);
+  t ? res.json(t) : res.sendStatus(404);
+}));
 
 app.patch('/api/tracks/:id', wrap(async (req, res) => {
   const patch = pick(req.body, ['title', 'artist', 'album', 'coverUrl', 'liked', 'color', 'peaks']);

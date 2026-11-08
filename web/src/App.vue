@@ -21,6 +21,7 @@ import Icon from './components/ui/Icon.vue';
 import AppLogo from './components/ui/AppLogo.vue';
 import InstallHint from './components/ui/InstallHint.vue';
 import { api, auth } from './api.js';
+import { readLibraryCache } from './cache.js';
 import { useLibrary } from './stores/library.js';
 import { usePlayer } from './stores/player.js';
 import { useUi } from './stores/ui.js';
@@ -43,19 +44,27 @@ useTheme();
 useFavicon();
 useAutoUpdate();
 
+let inited = false;
+function startPlayer() { if (!inited) { inited = true; player.init(); } }
+
 async function boot() {
-  state.value = 'loading';
+  // Có cache (đã đăng nhập từ trước): hiện thư viện ngay, không chờ mạng. Dữ liệu mới tải ở nền.
+  const cached = auth.token ? await readLibraryCache() : null;
+  if (cached) { lib.apply(cached); startPlayer(); state.value = 'ready'; }
+  else state.value = 'loading';
   try {
     const { required } = await api('/api/auth');
     if (!required) auth.token = 'open';
     else if (!auth.token || auth.token === 'open') { state.value = 'login'; return; }
     await lib.load();
-    player.init();
+    startPlayer();
     es?.close();
     es = lib.listenJobs(auth.token);
     state.value = 'ready';
   } catch (e) {
-    if (state.value !== 'login') { error.value = e.message; state.value = 'error'; }
+    // Đang hiện thư viện từ cache thì giữ nguyên, chỉ báo nhỏ; không có cache thì mới hiện lỗi
+    if (state.value === 'ready') ui.toast('Chưa kết nối được server: đang hiển thị thư viện đã lưu');
+    else if (state.value !== 'login') { error.value = e.message; state.value = 'error'; }
   }
 }
 
