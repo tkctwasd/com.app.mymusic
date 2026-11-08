@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
+import { IS_IOS } from './platform.js';
 import router from './router.js';
 // Font tự host (đi kèm bản build, không tải từ Google Fonts): có đủ tiếng Việt
 import '@fontsource/be-vietnam-pro/vietnamese-400.css';
@@ -25,5 +26,7 @@ import './styles/tokens.css';
 import './styles/base.css';
 
 createApp(App).use(createPinia()).use(router).mount('#app');
+// Trên iPhone ẩn thanh âm lượng trong app (Safari không cho chỉnh âm lượng bằng code)
+document.documentElement.classList.toggle('ios', IS_IOS);
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/sw.js');

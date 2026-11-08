@@ -28,6 +28,7 @@ function later() { save('installHintUntil', Date.now() + 7 * 86400000); show.val
         <li><span class="n">3</span> Bấm <b>Thêm</b>, rồi mở app từ màn hình chính</li>
       </ol>
       <p v-else class="muted note">Hãy mở trang này bằng <b>Safari</b> để thêm vào màn hình chính (Chrome trên iPhone không hỗ trợ).</p>
+      <p class="muted note">Lưu ý: app trên màn hình chính có dữ liệu đăng nhập riêng, có thể phải đăng nhập lại một lần. Trên iPhone dùng nút âm lượng vật lý.</p>
       <button class="btn btn-soft later" @click="later">Để sau</button>
       <span class="arrow" />
     </div>

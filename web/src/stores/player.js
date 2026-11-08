@@ -2,6 +2,8 @@
 import { defineStore } from 'pinia';
 import { useLibrary } from './library.js';
 import { load, save, shuffleArr, img } from '../utils.js';
+import { IS_IOS } from '../platform.js';
+import { srcFor, isOffline, ensureBlob, offline } from '../offline.js';
 
 const decks = [new Audio(), new Audio()];
 decks.forEach((a) => { a.preload = 'auto'; });
@@ -49,7 +51,7 @@ export const usePlayer = defineStore('player', {
         a.onwaiting = () => { if (i === active) this.buffering = true; };
         a.onplaying = () => { if (i === active) { this.buffering = false; this.applyPendingSeek(); } };
         a.onended = () => { if (i === active) this.onEnded(); };
-        a.onerror = () => { if (i === active && a.src) this.buffering = false; };
+        a.onerror = () => { if (i === active && a.src) { this.buffering = false; this.recoverOffline(); } };
       });
       // Hẹn giờ đã hết hạn khi mở lại app thì bỏ
       if (this.sleep?.mode === 'min' && this.sleep.endAt <= Date.now()) this.sleep = null;
@@ -88,14 +90,26 @@ export const usePlayer = defineStore('player', {
       this.currentId = t.id;
       const a = cur();
       other().pause();
-      if (a.src !== new URL(t.fileUrl, location.href).href) a.src = t.fileUrl;
       this.time = startAt; this.duration = t.duration || 0;
       pendingSeek = startAt;
-      const seek = () => { if (startAt) a.currentTime = startAt; };
-      a.readyState >= 1 ? seek() : a.addEventListener('loadedmetadata', seek, { once: true });
-      this.applyVolume();
-      if (autoplay) { a.play().catch(() => {}); this.countPlay(t); }
+      const go = () => {
+        if (this.currentId !== t.id) return;
+        const src = srcFor(t);
+        if (a.src !== new URL(src, location.href).href) a.src = src;
+        const seek = () => { if (startAt) a.currentTime = startAt; };
+        a.readyState >= 1 ? seek() : a.addEventListener('loadedmetadata', seek, { once: true });
+        this.applyVolume();
+        if (autoplay) { a.play().catch(() => {}); this.countPlay(t); }
+      };
+      // Đang mất mạng mà bài đã tải nhưng chưa có blob: tạo blob trước rồi mới phát
+      if (!navigator.onLine && isOffline(t.id) && !offline.blobs[t.id]) ensureBlob(t).then(go); else go();
       this.updateMediaSession();
+    },
+    // Phát lỗi (thường do mất mạng) mà bài đã tải offline: phát lại từ bản đã tải, giữ vị trí
+    recoverOffline() {
+      const t = this.track;
+      if (!t || !isOffline(t.id) || offline.blobs[t.id]) return;
+      ensureBlob(t).then((u) => { if (u) this.loadTrack(t, { autoplay: true, startAt: this.time }); });
     },
     countPlay(t) { if (countedId !== t.id) { countedId = t.id; useLibrary().markPlayed(t); } },
     toggle() {
@@ -151,14 +165,15 @@ export const usePlayer = defineStore('player', {
     // ---- Crossfade ----
     checkCrossfade() {
       const a = cur();
-      if (!this.crossfade || fadeTimer || this.repeat === 'one' || this.sleep?.mode === 'end' || a.paused) return;
+      // Trên iOS không đổi được âm lượng bằng code nên không crossfade (chuyển bài thẳng)
+      if (!this.crossfade || IS_IOS || fadeTimer || this.repeat === 'one' || this.sleep?.mode === 'end' || a.paused) return;
       const left = (a.duration || 0) - a.currentTime;
       if (!(left > 0 && left <= this.crossfade)) return;
       const id = this.advance();
       const t = useLibrary().byId[id];
       if (!t) return;
       const from = a, to = other();
-      to.src = t.fileUrl; to.currentTime = 0; to.volume = 0;
+      to.src = srcFor(t); to.currentTime = 0; to.volume = 0;
       to.play().catch(() => {});
       active = 1 - active;
       this.currentId = t.id; this.time = 0; this.duration = t.duration;

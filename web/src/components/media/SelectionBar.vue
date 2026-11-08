@@ -6,6 +6,7 @@ import { usePlayer } from '../../stores/player.js';
 import { useLibrary } from '../../stores/library.js';
 import { useUi } from '../../stores/ui.js';
 import { useMenus } from '../../composables/useMenus.js';
+import { toggleOffline } from '../../composables/useTrackMenu.js';
 
 const player = usePlayer(), lib = useLibrary(), ui = useUi();
 const { addToPlaylistItems } = useMenus();
@@ -21,6 +22,7 @@ async function like() {
   done(v ? `Đã thích ${tracks.value.length} bài` : `Đã bỏ thích ${tracks.value.length} bài`);
 }
 async function removeFromPl() { const p = ui.selPlaylist; await lib.removeFromPlaylist(p, ui.selection); done(`Đã bỏ ${tracks.value.length} bài khỏi ${p.name}`); }
+function offline() { toggleOffline(tracks.value); done(); }
 function del() { if (confirm(`Xóa ${tracks.value.length} bài khỏi thư viện?`)) { lib.deleteTracks(tracks.value); done(); } }
 function addTo(e) {
   const ids = [...ui.selection];
@@ -37,6 +39,7 @@ function addTo(e) {
       <button class="act" @click="play"><Icon name="play" size="16" /><span>Phát</span></button>
       <button class="act" @click="queue"><Icon name="queue" size="16" /><span>Hàng đợi</span></button>
       <button class="act" @click="addTo"><Icon name="plus" size="16" /><span>Playlist</span></button>
+      <button class="act" @click="offline"><Icon name="download" size="16" /><span>Tải offline</span></button>
       <button class="act" @click="like"><Icon :name="allLiked ? 'heartFill' : 'heart'" size="16" /><span>{{ allLiked ? 'Bỏ thích' : 'Thích' }}</span></button>
       <button v-if="ui.selPlaylist" class="act" @click="removeFromPl"><Icon name="minus" size="16" /><span>Bỏ khỏi playlist</span></button>
       <button class="act danger" @click="del"><Icon name="trash" size="16" /><span>Xóa</span></button>

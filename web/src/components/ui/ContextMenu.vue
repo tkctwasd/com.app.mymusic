@@ -69,3 +69,16 @@ li.danger:hover { color: var(--danger); }
 li .arrow { margin-left: auto; }
 li.sep { height: 1px; padding: 0; margin: 4px 6px; background: var(--line); pointer-events: none; }
 </style>
+
+<style>
+/* Điện thoại: menu chính trượt lên từ đáy màn hình (bottom sheet), dễ chạm hơn menu thả nổi */
+@media (max-width: 767px) {
+  .ctx:not(.sub) {
+    left: 0 !important; right: 0; top: auto !important; bottom: 0; min-width: 0; max-width: none;
+    border-radius: 22px 22px 0 0; padding: 10px 10px calc(18px + env(safe-area-inset-bottom));
+    max-height: 72vh; overflow-y: auto; animation: sheet .28s var(--spring);
+  }
+  .ctx:not(.sub) li { min-height: 44px; }
+}
+@keyframes sheet { from { transform: translateY(100%); } }
+</style>

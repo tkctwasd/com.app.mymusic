@@ -3,6 +3,18 @@ import { useRouter } from 'vue-router';
 import { usePlayer } from '../stores/player.js';
 import { useLibrary } from '../stores/library.js';
 import { useUi } from '../stores/ui.js';
+import { isOffline, downloadTrack, removeTrack } from '../offline.js';
+
+// Tải (hoặc xóa) bản nghe offline cho một hoặc nhiều bài; báo lỗi/kết quả bằng toast
+export async function toggleOffline(tracks) {
+  const ui = useUi();
+  // Tất cả đã tải -> xóa; còn thiếu -> tải những bài còn thiếu
+  if (tracks.every((t) => isOffline(t.id))) { for (const t of tracks) await removeTrack(t); ui.toast(`Đã xóa ${tracks.length} bản nghe offline`); return; }
+  const todo = tracks.filter((t) => !isOffline(t.id));
+  let ok = 0, fail = 0;
+  for (const t of todo) { try { await downloadTrack(t); ok++; } catch { fail++; } }
+  ui.toast(fail ? `Tải được ${ok} bài, lỗi ${fail} bài (có thể do CORS hoặc mạng)` : `Đã tải ${ok} bài để nghe offline`);
+}
 
 export function useTrackMenu() {
   const player = usePlayer(), lib = useLibrary(), ui = useUi(), router = useRouter();
@@ -21,6 +33,7 @@ export function useTrackMenu() {
     },
     playlist && { label: `Xóa khỏi ${playlist.name}`, icon: 'minus', fn: () => lib.removeFromPlaylist(playlist, t.id) },
     { label: t.liked ? 'Xóa khỏi Bài hát đã thích' : 'Lưu vào Bài hát đã thích', icon: t.liked ? 'heartFill' : 'heart', fn: () => lib.toggleLike(t) },
+    { label: isOffline(t.id) ? 'Xóa bản nghe offline' : 'Tải để nghe offline', icon: 'download', fn: () => toggleOffline([t]) },
     { sep: true },
     { label: 'Đi tới nghệ sĩ', icon: 'artist', fn: () => router.push(`/artist/${encodeURIComponent(t.artist)}`) },
     t.album && { label: 'Đi tới album', icon: 'album', fn: () => router.push(`/album/${encodeURIComponent(t.artist)}/${encodeURIComponent(t.album)}`) },

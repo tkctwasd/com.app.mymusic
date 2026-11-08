@@ -1,12 +1,44 @@
 <script setup>
+import { onMounted, ref } from 'vue';
 import Modal from '../ui/Modal.vue';
 import Slider from '../ui/Slider.vue';
 import Icon from '../ui/Icon.vue';
 import { usePlayer } from '../../stores/player.js';
 import { useUi } from '../../stores/ui.js';
-import { auth } from '../../api.js';
+import { api, auth } from '../../api.js';
+import { useLibrary } from '../../stores/library.js';
+import { offline, usageBytes, removeTrack } from '../../offline.js';
 
-const player = usePlayer(), ui = useUi();
+const player = usePlayer(), ui = useUi(), lib = useLibrary();
+const usage = ref(0);
+// Sao lưu: tải file JSON metadata thư viện (file nhạc vẫn nằm trên máy chủ)
+async function backup() {
+  try {
+    const data = await api('/api/backup');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    Object.assign(document.createElement('a'), { href: url, download: `my-music-backup-${new Date().toISOString().slice(0, 10)}.json` }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) { ui.toast(`Sao lưu lỗi: ${e.message}`); }
+}
+// Khôi phục: nạp file JSON sao lưu, thêm/cập nhật bài và playlist, rồi tải lại thư viện
+function restore() {
+  const inp = Object.assign(document.createElement('input'), { type: 'file', accept: 'application/json,.json' });
+  inp.onchange = async () => {
+    try {
+      const data = JSON.parse(await inp.files[0].text());
+      const r = await api('/api/restore', { method: 'POST', body: data });
+      await lib.load();
+      ui.toast(`Đã khôi phục ${r.tracks} bài, ${r.playlists} playlist`);
+    } catch (e) { ui.toast(`Khôi phục lỗi: ${e.message}`); }
+  };
+  inp.click();
+}
+onMounted(async () => { usage.value = await usageBytes(); });
+async function clearOffline() {
+  if (!confirm('Xóa tất cả bản nghe offline?')) return;
+  for (const t of lib.tracks.filter((x) => offline.ids.includes(x.id))) await removeTrack(t);
+  usage.value = await usageBytes();
+}
 const logout = () => { auth.token = ''; location.reload(); };
 const themes = [['light', 'Sáng', 'sun'], ['dark', 'Tối', 'moon'], ['system', 'Theo hệ thống', 'monitor']];
 const shortcuts = [
@@ -19,6 +51,24 @@ const shortcuts = [
 
 <template>
   <Modal title="Cài đặt" @close="ui.close()">
+    <section>
+      <h3>Dữ liệu</h3>
+      <div class="offline-info">
+        <div><b>Sao lưu thư viện</b><small class="muted">Tải về file JSON gồm bài, playlist, lời bài hát</small></div>
+        <button class="btn btn-soft" @click="backup">Sao lưu</button>
+      </div>
+      <div class="offline-info">
+        <div><b>Khôi phục</b><small class="muted">Chọn file sao lưu để thêm lại bài và playlist</small></div>
+        <button class="btn btn-soft" @click="restore">Khôi phục</button>
+      </div>
+    </section>
+    <section>
+      <h3>Nghe offline</h3>
+      <div class="offline-info">
+        <div><b>{{ offline.ids.length }} bài đã tải</b><small class="muted">Dung lượng app đang dùng: {{ (usage / 1048576).toFixed(1) }} MB (ước tính)</small></div>
+        <button class="btn btn-soft" :disabled="!offline.ids.length" @click="clearOffline">Xóa tất cả</button>
+      </div>
+    </section>
     <section>
       <h3>Giao diện</h3>
       <div class="seg themes">
@@ -60,6 +110,8 @@ const shortcuts = [
 </template>
 
 <style scoped>
+.offline-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.offline-info > div { display: flex; flex-direction: column; }
 section { margin-bottom: 28px; }
 h3 { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; }
 .themes { display: flex; margin-bottom: 8px; }

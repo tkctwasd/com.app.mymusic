@@ -41,6 +41,9 @@ const shuffleAll = () => player.playTracks(shuffleArr(lib.tracks), 0, { name: 'T
 
 const recent = computed(() => lib.recent.slice(0, 14));
 const newest = computed(() => lib.tracks.slice(0, 14));
+// Bài chưa nghe lần nào (playCount = 0); Mix: xáo trộn các bài đã thích
+const unplayed = computed(() => lib.tracks.filter((t) => !t.playCount).slice(0, 14));
+const mix = () => { const l = shuffleArr(lib.liked); l.length ? player.playTracks(l, 0, { name: 'Mix từ bài đã thích', path: '/liked' }) : ui.toast('Chưa có bài đã thích'); };
 const topTracks = computed(() => [...lib.tracks].filter((x) => x.playCount).sort((a, b) => b.playCount - a.playCount).slice(0, 14));
 const albumPath = (a) => `/album/${encodeURIComponent(a.artist)}/${encodeURIComponent(a.name)}`;
 const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
@@ -106,6 +109,8 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
         </RouterLink>
       </div>
 
+      <div v-if="lib.liked.length" class="mix-row"><button class="chip" @click="mix"><Icon name="shuffle" size="14" /> Mix từ bài đã thích</button></div>
+
       <Shelf v-if="recent.length" title="Nghe gần đây">
         <Card v-for="x in recent" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="x.artist" :cover="x.coverUrl"
           :playing="player.isCurrent(x) && player.playing" :active="player.isCurrent(x)" @play="playTrack(x, recent, { name: 'Nghe gần đây', path: '/' })" />
@@ -113,6 +118,10 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
       <Shelf title="Mới thêm vào" to="/songs">
         <Card v-for="x in newest" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="x.artist" :cover="x.coverUrl"
           :playing="player.isCurrent(x) && player.playing" :active="player.isCurrent(x)" @play="playTrack(x, lib.tracks, { name: 'Tất cả bài hát', path: '/songs' })" />
+      </Shelf>
+      <Shelf v-if="unplayed.length" title="Chưa nghe bao giờ">
+        <Card v-for="x in unplayed" :key="x.id" :to="`/artist/${encodeURIComponent(x.artist)}`" :title="x.title" :sub="x.artist" :cover="x.coverUrl"
+          :playing="player.isCurrent(x) && player.playing" :active="player.isCurrent(x)" @play="playTrack(x, unplayed, { name: 'Chưa nghe bao giờ', path: '/' })" />
       </Shelf>
       <Shelf v-if="lib.playlists.length" title="Playlist của bạn" to="/shelf">
         <Card v-for="p in lib.playlists.slice(0, 14)" :key="p.id" :to="`/playlist/${p.id}`" :title="p.name" :sub="p.description || `${p.trackIds.length} bài`" vinyl droppable
@@ -137,6 +146,7 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
 </template>
 
 <style scoped>
+.mix-row { display: flex; margin: 20px 0 0; }
 .listen { padding-top: 12px; }
 .welcome { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
 .orb { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); box-shadow: 0 0 0 12px color-mix(in oklab, var(--accent) 6%, transparent); margin-bottom: 8px; }

@@ -22,6 +22,7 @@ import AppLogo from './components/ui/AppLogo.vue';
 import InstallHint from './components/ui/InstallHint.vue';
 import { api, auth } from './api.js';
 import { readLibraryCache } from './cache.js';
+import { refreshOffline } from './offline.js';
 import { useLibrary } from './stores/library.js';
 import { usePlayer } from './stores/player.js';
 import { useUi } from './stores/ui.js';
@@ -50,13 +51,14 @@ function startPlayer() { if (!inited) { inited = true; player.init(); } }
 async function boot() {
   // Có cache (đã đăng nhập từ trước): hiện thư viện ngay, không chờ mạng. Dữ liệu mới tải ở nền.
   const cached = auth.token ? await readLibraryCache() : null;
-  if (cached) { lib.apply(cached); startPlayer(); state.value = 'ready'; }
+  if (cached) { lib.apply(cached); startPlayer(); state.value = 'ready'; refreshOffline(lib.tracks); }
   else state.value = 'loading';
   try {
     const { required } = await api('/api/auth');
     if (!required) auth.token = 'open';
     else if (!auth.token || auth.token === 'open') { state.value = 'login'; return; }
     await lib.load();
+    refreshOffline(lib.tracks);
     startPlayer();
     es?.close();
     // Gắn cookie phiên cho kết nối SSE (token không nằm trên URL)

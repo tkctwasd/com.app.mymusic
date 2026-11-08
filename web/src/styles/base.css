@@ -81,6 +81,10 @@ kbd { font: 600 11px var(--font); padding: 2px 7px; border-radius: 6px; backgrou
 @media (max-width: 767px) { input, textarea, select { font-size: 16px !important; } }
 /* Chạy như app (thêm vào MH chính): không cho chọn chữ / menu nhấn giữ trên nút và ảnh */
 @media (display-mode: standalone) { button, a, img { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; } }
+/* iPhone: không có thanh âm lượng trong app (dùng nút vật lý) */
+.ios .vol, .ios .volume { display: none !important; }
+/* Danh sách bài dài: trình duyệt bỏ qua việc vẽ các dòng ngoài màn hình (giảm việc render khi cuộn) */
+.tl > .wrap { content-visibility: auto; contain-intrinsic-size: auto 60px; }
 /* Điện thoại: nút biểu tượng đủ lớn để chạm (khuyến nghị ~44px) */
 @media (max-width: 767px) { .icon-btn { width: 44px; height: 44px; } }
 /* Người dùng bật "giảm chuyển động" trên máy: tắt hiệu ứng chuyển cảnh và lặp */

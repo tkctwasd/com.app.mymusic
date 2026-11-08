@@ -11,6 +11,7 @@ import { useLibrary } from '../stores/library.js';
 import { usePlayer } from '../stores/player.js';
 import { useUi } from '../stores/ui.js';
 import { load, save, hashColor } from '../utils.js';
+import { api } from '../api.js';
 import { usePage } from '../composables/usePage.js';
 
 const lib = useLibrary(), player = usePlayer(), ui = useUi(), router = useRouter();
@@ -21,10 +22,21 @@ const q = ref(ui.searchQ);
 let timer;
 watch(() => ui.searchQ, (v) => { clearTimeout(timer); timer = setTimeout(() => { q.value = v; }, 150); });
 
+// Tìm trong lời bài hát (máy chủ), debounce để không gọi liên tục khi gõ
+const lyricHits = ref([]);
+let lyricTimer;
+watch(q, (v) => {
+  clearTimeout(lyricTimer);
+  const s = (v || '').trim();
+  if (s.length < 2) { lyricHits.value = []; return; }
+  lyricTimer = setTimeout(() => api(`/api/search/lyrics?q=${encodeURIComponent(s)}`).then((h) => { lyricHits.value = h; }).catch(() => {}), 350);
+});
+const playHit = (h) => { const t = lib.byId[h.id]; if (t) player.playTracks([t], 0, { name: 'Tìm trong lời bài hát', path: '' }); };
+
 const tab = ref('all');
 const tabs = { all: 'Tất cả', tracks: 'Bài hát', artists: 'Nghệ sĩ', albums: 'Album', playlists: 'Playlist' };
 const r = computed(() => lib.search(q.value));
-const hasAny = computed(() => r.value.tracks.length || r.value.artists.length || r.value.albums.length || r.value.playlists.length);
+const hasAny = computed(() => r.value.tracks.length || r.value.artists.length || r.value.albums.length || r.value.playlists.length || lyricHits.value.length);
 const ctx = computed(() => ({ name: `Tìm "${q.value}"`, path: `/search?q=${q.value}` }));
 
 // Kết quả hàng đầu: nghệ sĩ khớp tên chính xác > bài hát đầu tiên
@@ -121,6 +133,13 @@ const browse = computed(() => [
             <h2 class="h">Bài hát</h2>
             <TrackTable :tracks="r.tracks.slice(0, 4)" :context="ctx" :show-header="false" :show-album="false" :show-added="false" :numbered="false" class="tt" />
           </section>
+          <section v-if="lyricHits.length" class="songs">
+            <h2 class="h">Trong lời bài hát</h2>
+            <button v-for="h in lyricHits" :key="h.id" class="lyric-hit" @click="playHit(h)">
+              <span class="lh-title ellipsis">{{ h.title }} <small class="muted">· {{ h.artist }}</small></span>
+              <span class="lh-snip muted ellipsis">“{{ h.snippet }}”</span>
+            </button>
+          </section>
         </div>
         <CardRow v-if="r.artists.length" title="Nghệ sĩ">
           <Card v-for="a in r.artists" :key="a.name" :to="`/artist/${encodeURIComponent(a.name)}`" :title="a.name" sub="Nghệ sĩ" :cover="a.coverUrl" round icon="artist"
@@ -154,6 +173,10 @@ const browse = computed(() => [
 </template>
 
 <style scoped>
+.lyric-hit { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 10px 12px; border-radius: 12px; text-align: left; transition: background .2s; }
+.lyric-hit:hover { background: var(--hover); }
+.lh-title { max-width: 100%; font-weight: 600; }
+.lh-snip { max-width: 100%; font-size: 13px; font-style: italic; }
 .search { padding-top: 80px; }
 .m-search { position: relative; margin-bottom: 16px; }
 .m-search input { width: 100%; height: 44px; border-radius: 6px; border: 0; padding: 0 12px 0 44px; background: #fff; color: #000; font-size: 15px; font-weight: 600; outline: none; }
