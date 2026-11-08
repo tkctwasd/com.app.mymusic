@@ -200,7 +200,8 @@ const artistPath = (a) => `/artist/${encodeURIComponent(a.name)}`;
 
 @media (max-width: 1000px) { .top { grid-template-columns: 1fr; } .greet { order: -1; padding: 0; } .stats { display: none; } }
 @media (max-width: 767px) {
-  .hero { min-height: 0; padding: 14px; gap: 14px; border-radius: 22px; }
+  /* clip-path cắt đúng bo góc: iOS Safari hay để lớp nền blur (inset -40px) tràn ra ngoài overflow:hidden + border-radius */
+  .hero { min-height: 0; padding: 14px; gap: 14px; border-radius: 22px; clip-path: inset(0 round 22px); transform: translateZ(0); }
   .hero-cv { width: 84px; --cover-r: 14px; }
   .hero-play { width: 48px; height: 48px; align-self: center; }
   .hero-prog { margin-top: 8px; }
