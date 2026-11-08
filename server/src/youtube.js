@@ -7,6 +7,17 @@ import crypto from 'node:crypto';
 
 export const YT_RE = /^https?:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//;
 
+// Link video kèm playlist/mix (vd watch?v=X&list=RDX hoặc youtu.be/X?list=RDX) -> chỉ lấy đúng 1 video.
+// Link playlist thuần (không có video id) giữ nguyên để vẫn import hàng loạt được.
+export function singleVideoUrl(url = '') {
+  try {
+    const u = new URL(url);
+    const id = u.hostname.endsWith('youtu.be') ? u.pathname.slice(1).split('/')[0] : u.searchParams.get('v');
+    if (id && u.searchParams.has('list')) return `https://www.youtube.com/watch?v=${id}`;
+  } catch {}
+  return url;
+}
+
 // Cookies YouTube (khi chạy trên server cloud, YouTube hay đòi xác minh "not a bot"):
 // đặt biến YT_COOKIES = nội dung file cookies.txt (định dạng Netscape) -> ghi ra file tạm và thêm --cookies.
 let cookieFile = null;
@@ -32,7 +43,7 @@ const bestThumb = (e) => e.thumbnail || e.thumbnails?.at(-1)?.url || '';
 
 // Trả về { type: 'video', item } hoặc { type: 'playlist', title, items[] }
 export async function preview(url) {
-  const j = JSON.parse(await run([url, '-J', '--flat-playlist', '--no-warnings']));
+  const j = JSON.parse(await run([singleVideoUrl(url), '-J', '--flat-playlist', '--no-warnings']));
   const map = (e) => ({
     url: e.webpage_url || e.url || `https://www.youtube.com/watch?v=${e.id}`,
     title: e.track || cleanTitle(e.title), artist: e.artist || e.uploader || e.channel || '',

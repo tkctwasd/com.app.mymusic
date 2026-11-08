@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { Tracks, Playlists } from './db.js';
 import { storage } from './storage.js';
-import { preview, YT_RE, cleanTitle } from './youtube.js';
+import { preview, YT_RE, cleanTitle, singleVideoUrl } from './youtube.js';
 import { addJob, listJobs, retryJob, clearFinished, subscribe } from './jobs.js';
 import { authEnabled, login, requireAuth } from './auth.js';
 
@@ -108,7 +108,7 @@ app.get('/api/youtube/preview', wrap(async (req, res) => {
 app.post('/api/import', (req, res) => {
   const items = req.body.items || [{ url: req.body.url }];
   if (!items.length || items.some((i) => !YT_RE.test(i.url || ''))) return res.status(400).json({ error: 'URL YouTube không hợp lệ' });
-  res.json(items.map((i) => addJob({ url: i.url, title: i.title, meta: pick(i, ['title', 'artist', 'album']), playlistId: req.body.playlistId })));
+  res.json(items.map((i) => addJob({ url: singleVideoUrl(i.url), title: i.title, meta: pick(i, ['title', 'artist', 'album']), playlistId: req.body.playlistId })));
 });
 // Tải file nhạc lên trực tiếp (không cần YouTube): body = file thô, ?name=tên-file&playlistId=
 app.post('/api/upload', express.raw({ type: () => true, limit: '200mb' }), (req, res) => {
