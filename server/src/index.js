@@ -14,7 +14,8 @@ const app = express();
 app.set('trust proxy', 1); // sau proxy của Render: để biết kết nối là HTTPS (cookie Secure)
 // Nén gzip/br cho JSON, HTML, JS, CSS. Không nén luồng SSE (sẽ bị giữ lại không gửi ngay).
 app.use(compression({ filter: (req, res) => !String(res.getHeader('Content-Type') || '').includes('text/event-stream') && compression.filter(req, res) }));
-app.use(express.json({ limit: '1mb' }));
+// Body JSON 1MB; riêng khôi phục thư viện (/api/restore) cho phép lớn hơn (route tự parse)
+app.use((req, res, next) => (req.path === '/api/restore' ? next() : express.json({ limit: '1mb' })(req, res, next)));
 app.use('/media', express.static(storage.root)); // express.static hỗ trợ Range -> tua nhạc được
 
 const wrap = (fn) => (req, res) => Promise.resolve(fn(req, res)).catch((e) => res.status(500).json({ error: e.message }));
@@ -28,9 +29,16 @@ app.get('/api/version', (req, res) => {
   try { v = String(fs.statSync(path.resolve('../web/dist/index.html')).mtimeMs); } catch {}
   res.set('Cache-Control', 'no-store').json({ v });
 });
+// Giới hạn đăng nhập sai: 10 lần / 15 phút cho mỗi IP (chống dò mật khẩu)
+const failures = new Map(); // ip -> [thời điểm sai]
+const WINDOW = 15 * 60000, MAX_FAILS = 10;
 app.post('/api/login', (req, res) => {
+  const now = Date.now();
+  const recent = (failures.get(req.ip) || []).filter((t) => now - t < WINDOW);
+  if (recent.length >= MAX_FAILS) return res.status(429).json({ error: 'Nhập sai quá nhiều lần, thử lại sau 15 phút' });
   const token = login(req.body.password);
-  if (!token) return res.status(401).json({ error: 'Sai mật khẩu' });
+  if (!token) { failures.set(req.ip, [...recent, now]); return res.status(401).json({ error: 'Sai mật khẩu' }); }
+  failures.delete(req.ip);
   setSession(req, res, token);
   res.json({ token });
 });
@@ -43,6 +51,21 @@ app.post('/api/session', (req, res) => {
 });
 app.use('/api', requireAuth);
 
+// ---- Sao lưu / khôi phục thư viện (metadata; file nhạc nằm trên Cloudinary/local nên vẫn còn) ----
+app.get('/api/backup', wrap(async (req, res) => {
+  const data = { app: 'my-music', version: 1, exportedAt: Date.now(), tracks: await Tracks.all(), playlists: await Playlists.all() };
+  res.set('Content-Disposition', `attachment; filename="my-music-backup-${new Date().toISOString().slice(0, 10)}.json"`).json(data);
+}));
+// Khôi phục: ghi đè/thêm theo id (không xóa bài hiện có)
+app.post('/api/restore', express.json({ limit: '50mb' }), wrap(async (req, res) => {
+  const { tracks = [], playlists = [] } = req.body || {};
+  if (!Array.isArray(tracks) || !Array.isArray(playlists)) return res.status(400).json({ error: 'File sao lưu không hợp lệ' });
+  let t = 0, p = 0;
+  for (const x of tracks) if (x?.id && x.fileUrl) { await Tracks.upsert(x); t++; }
+  for (const x of playlists) if (x?.id) { await Playlists.upsert(x); p++; }
+  res.json({ tracks: t, playlists: p });
+}));
+
 // ---- Tracks ----
 // Danh sách gọn: bỏ peaks (300 số) và lyrics (văn bản dài). Thay bằng cờ hasPeaks/hasLyrics,
 // client tải chi tiết qua GET /api/tracks/:id khi thật sự cần (waveform, lời bài hát).
@@ -51,6 +74,19 @@ const slim = (t) => {
   return { ...rest, hasPeaks: !!peaks?.length, hasLyrics: !!lyrics };
 };
 app.get('/api/tracks', wrap(async (req, res) => res.json((await Tracks.all()).map(slim))));
+// Tìm trong lời bài hát (plain + synced): trả về bài và một đoạn lời có chứa từ khóa
+app.get('/api/search/lyrics', wrap(async (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  if (q.length < 2) return res.json([]);
+  const hits = [];
+  for (const t of await Tracks.all()) {
+    const text = `${t.lyrics?.plain || ''}\n${(t.lyrics?.synced || '').replace(/\[[^\]]*\]/g, '')}`;
+    const line = text.split('\n').find((l) => l.toLowerCase().includes(q));
+    if (line) hits.push({ id: t.id, title: t.title, artist: t.artist, coverUrl: t.coverUrl, snippet: line.trim().slice(0, 160) });
+    if (hits.length >= 30) break;
+  }
+  res.json(hits);
+}));
 app.get('/api/tracks/:id', wrap(async (req, res) => {
   const t = await Tracks.get(req.params.id);
   t ? res.json(t) : res.sendStatus(404);
