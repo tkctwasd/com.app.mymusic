@@ -46,7 +46,7 @@ export const useUi = defineStore('ui', {
     },
     open(name, props = {}) { this.modal = { name, props }; },
     close() { this.modal = null; },
-    openStage(tab) { if (tab) this.set('stageTab', tab); this.stage = true; },
+    openStage(tab) { if (tab) this.set('stageTab', tab); this.stage = true; this.clearSelection(); },
     closeStage() { this.stage = false; this.present = false; },
     togglePresent() { this.present = !this.present; if (this.present) this.stage = true; },
     openCmd(q = '') { this.cmd = { q }; },

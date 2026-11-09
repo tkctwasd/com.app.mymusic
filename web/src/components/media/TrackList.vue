@@ -44,6 +44,8 @@ function toggleSel(i) {
   anchor = i;
 }
 function onClick(e, i) {
+  // Vừa nhấn giữ để chọn: bỏ qua cú click sinh ra khi nhấc tay (nếu không sẽ bỏ chọn ngay)
+  if (Date.now() - heldAt < 700) return;
   if (swipeOpen.value !== null) { swipeOpen.value = null; return; }
   if (!props.selectable) return play(i);
   if (e.shiftKey && anchor >= 0) {
@@ -64,10 +66,10 @@ function dragBind(i, t) {
 // Cử chỉ chạm: nhấn giữ = chọn, vuốt trái = lộ nút
 const swipeOpen = ref(null); // index đang mở
 const swipeDx = ref(0), swipeIdx = ref(-1);
-let touch = null, holdTimer = null;
+let touch = null, holdTimer = null, heldAt = 0;
 function tStart(e, i) {
   touch = { x: e.touches[0].clientX, y: e.touches[0].clientY, axis: null, i };
-  holdTimer = setTimeout(() => { if (touch && !touch.axis) { navigator.vibrate?.(15); toggleSel(i); touch.held = true; } }, 450);
+  holdTimer = setTimeout(() => { if (touch && !touch.axis) { navigator.vibrate?.(15); toggleSel(i); touch.held = true; heldAt = Date.now(); } }, 450);
 }
 function tMove(e) {
   if (!touch) return;
@@ -104,7 +106,7 @@ function swipeQueue(t) { swipeOpen.value = null; player.addToQueue(t.id); ui.toa
         @touchstart.passive="tStart($event, i)" @touchmove.passive="tMove" @touchend="tEnd">
         <span v-if="sortable" class="grip" title="Kéo để sắp xếp" v-bind="ui.isMobile ? dnd.handle(i) : {}" @click.stop><Icon name="grip" size="16" /></span>
         <span class="n">
-          <span v-if="selected.has(t.id) || (ui.selection.length && !ui.isMobile)" class="check" :class="{ on: selected.has(t.id) }" @click.stop="toggleSel(i)"><Icon v-if="selected.has(t.id)" name="check" size="14" /></span>
+          <span v-if="selected.has(t.id) || ui.selection.length" class="check" :class="{ on: selected.has(t.id) }" @click.stop="toggleSel(i)"><Icon v-if="selected.has(t.id)" name="check" size="14" /></span>
           <template v-else>
             <EqBars v-if="isCur(t) && player.playing" class="eq" />
             <span v-else-if="numbered" class="num">{{ i + 1 }}</span>
