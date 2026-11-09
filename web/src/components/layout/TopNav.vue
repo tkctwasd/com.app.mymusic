@@ -68,7 +68,7 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
   /* Tai thỏ: chừa vùng an toàn cả trên lẫn hai bên (iPhone xoay ngang có bề rộng > 767px nên dùng layout này) */
   height: calc(var(--nav-h) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
   transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
-.top.solid { background: var(--glass); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border-bottom-color: var(--line); }
+.top.solid { background: color-mix(in oklab, color-mix(in oklab, var(--page-c, var(--surface)) 30%, var(--bg)) 78%, transparent); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); }
 .left { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; }
 .brand :deep(.logo) { border-radius: 10px; filter: drop-shadow(0 4px 10px rgb(0 0 0 / .3)); }

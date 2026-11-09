@@ -1,7 +1,7 @@
 <script setup>
 // Chi tiết dùng chung cho: Tất cả bài hát, Bài hát đã thích, Playlist, Album.
 // Header gọn (bìa + tên + nút ▶ ⇄ lớn), nền màu bìa nhạt dần; danh sách bài có khoảng thở; gợi ý thêm bài cho playlist.
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import Icon from '../components/ui/Icon.vue';
 import Cover from '../components/ui/Cover.vue';
@@ -40,6 +40,10 @@ const context = computed(() => ({ name: info.value.title, path: path.value }));
 const coverForColor = computed(() => info.value.cover || info.value.mosaic?.[0] || '');
 const dom = useDominantColor(coverForColor, () => info.value.title);
 const color = computed(() => (props.kind === 'liked' ? '#e0607e' : dom.value));
+
+// Báo màu trang cho thanh nav trên cùng để đồng màu khi cuộn
+watchEffect(() => document.documentElement.style.setProperty('--page-c', color.value || ''));
+onUnmounted(() => document.documentElement.style.removeProperty('--page-c'));
 const total = computed(() => tracks.value.reduce((s, t) => s + (t.duration || 0), 0));
 const ctxPlaying = computed(() => player.context?.path === path.value && player.playing);
 
@@ -147,7 +151,7 @@ const suggestions = computed(() => {
 
 <style scoped>
 .coll { position: relative; min-height: 100%; }
-.wash { position: absolute; z-index: 0; top: calc(-1 * var(--nav-h)); left: 0; right: 0; height: 520px; pointer-events: none;
+.wash { position: absolute; z-index: 0; top: calc(-1 * var(--top-h)); left: 0; right: 0; height: 520px; pointer-events: none;
   background: radial-gradient(120% 90% at 20% 0%, color-mix(in oklab, var(--c) 45%, transparent), transparent 70%); opacity: .8; transition: background .6s; }
 .page { position: relative; z-index: 1; }
 .hd { display: flex; align-items: flex-end; gap: 32px; padding: 20px 0 8px; }

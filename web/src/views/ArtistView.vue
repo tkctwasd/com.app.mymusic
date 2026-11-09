@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect, onUnmounted } from 'vue';
 import Icon from '../components/ui/Icon.vue';
 import Cover from '../components/ui/Cover.vue';
 import PlayButton from '../components/media/PlayButton.vue';
@@ -21,6 +21,10 @@ const showAll = ref(false);
 const path = computed(() => `/artist/${encodeURIComponent(props.name)}`);
 const ctx = computed(() => ({ name: props.name, path: path.value }));
 const color = useDominantColor(() => artist.value?.coverUrl, () => props.name);
+
+// Báo màu trang cho thanh nav trên cùng để đồng màu khi cuộn
+watchEffect(() => document.documentElement.style.setProperty('--page-c', color.value || ''));
+onUnmounted(() => document.documentElement.style.removeProperty('--page-c'));
 const playing = computed(() => player.context?.path === path.value && player.playing);
 const play = () => player.toggleContext(popular.value, ctx.value);
 function shufflePlay() {
@@ -63,7 +67,7 @@ const albumPath = (a) => `/album/${encodeURIComponent(a.artist)}/${encodeURIComp
 
 <style scoped>
 .artist { position: relative; min-height: 100%; }
-.banner { position: absolute; top: calc(-1 * var(--nav-h)); left: 0; right: 0; height: 420px; overflow: hidden; pointer-events: none; }
+.banner { position: absolute; top: calc(-1 * var(--top-h)); left: 0; right: 0; height: 420px; overflow: hidden; pointer-events: none; }
 .bg { position: absolute; inset: -60px; background-color: var(--c); background-size: cover; background-position: center; filter: blur(60px) saturate(1.4); opacity: .55; }
 .banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent, var(--bg)); }
 .page { position: relative; }

@@ -156,8 +156,8 @@ watch(() => route.fullPath, () => { ui.scrollY = 0; main.value?.scrollTo(0, 0); 
   background:
     radial-gradient(60% 50% at 15% -5%, color-mix(in oklab, var(--tint) 30%, transparent), transparent 70%),
     radial-gradient(50% 40% at 95% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 70%); }
-.main { height: 100%; padding: calc(var(--nav-h) + env(safe-area-inset-top)) env(safe-area-inset-right) calc(var(--dock-h) + 56px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
-.app.mobile .main { padding: calc(56px + env(safe-area-inset-top)) env(safe-area-inset-right) calc(var(--mnav-h) + 64px + 32px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
+.main { --top-h: calc(var(--nav-h) + env(safe-area-inset-top)); height: 100%; padding: var(--top-h) env(safe-area-inset-right) calc(var(--dock-h) + 56px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
+.app.mobile .main { --top-h: calc(56px + env(safe-area-inset-top)); padding: var(--top-h) env(safe-area-inset-right) calc(var(--mnav-h) + 64px + 32px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
 .app.staged .main { overflow: hidden; }
 .splash { height: 100%; display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center; background: var(--bg); }
 .logo-spin { width: 40px; height: 40px; border: 3px solid var(--surface-3); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
