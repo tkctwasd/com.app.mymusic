@@ -6,6 +6,14 @@ import { writeLibraryCache } from '../cache.js';
 
 // Lấy id video YouTube từ link (watch?v=, youtu.be/, shorts/, music.youtube...)
 const ytId = (u = '') => /(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/.exec(u)?.[1] || '';
+// Nhớ chuỗi đã bỏ dấu: tìm kiếm gõ từng phím không phải normalize lại cả thư viện mỗi lần
+const foldCache = new Map();
+const folded = (s) => {
+  s = s || '';
+  let v = foldCache.get(s);
+  if (v === undefined) { if (foldCache.size > 20000) foldCache.clear(); v = fold(s); foldCache.set(s, v); }
+  return v;
+};
 
 export const useLibrary = defineStore('library', {
   state: () => ({ tracks: [], playlists: [], loaded: false, jobs: [] }),
@@ -55,8 +63,8 @@ export const useLibrary = defineStore('library', {
     search(q) {
       q = fold(q.trim());
       if (!q) return { tracks: [], artists: [], albums: [], playlists: [] };
-      const has = (...xs) => xs.some((x) => fold(x || '').includes(q));
-      const score = (s) => { s = fold(s || ''); return s === q ? 3 : s.startsWith(q) ? 2 : s.includes(q) ? 1 : 0; };
+      const has = (...xs) => xs.some((x) => folded(x).includes(q));
+      const score = (s) => { s = folded(s); return s === q ? 3 : s.startsWith(q) ? 2 : s.includes(q) ? 1 : 0; };
       return {
         tracks: this.tracks.filter((t) => has(t.title, t.artist, t.album)).sort((a, b) => score(b.title) - score(a.title) || (b.playCount || 0) - (a.playCount || 0)),
         artists: this.artists.filter((a) => has(a.name)).sort((a, b) => score(b.name) - score(a.name)),

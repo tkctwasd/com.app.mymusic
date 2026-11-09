@@ -1,14 +1,16 @@
 // Nghe offline: bài đã tải được lưu trong Cache Storage của trình duyệt (cache tên my-music-audio).
 // Khi phát, bài đã tải dùng blob URL từ cache, nên chạy được cả khi mất mạng.
 // Không cache toàn bộ thư viện: chỉ những bài người dùng chủ động tải về.
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 
 const CACHE = 'my-music-audio';
 export const offline = reactive({ ids: [], blobs: {} }); // ids: bài đã tải; blobs: id -> blob URL (tạo khi cần)
 const abs = (u) => new URL(u, location.href).href;
 const hasCache = () => typeof caches !== 'undefined';
 
-export const isOffline = (id) => offline.ids.includes(id);
+// Set để tra cứu O(1) (danh sách dài gọi isOffline cho từng dòng)
+const idSet = computed(() => new Set(offline.ids));
+export const isOffline = (id) => idSet.value.has(id);
 
 // Nguồn phát: blob (bản đã tải) nếu có, không thì tải từ mạng
 export const srcFor = (t) => offline.blobs[t.id] || t.fileUrl;

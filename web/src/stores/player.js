@@ -16,6 +16,7 @@ let countedId = null;
 const PERSIST = ['context', 'order', 'original', 'pos', 'upNext', 'currentId', 'time', 'volume', 'muted', 'shuffle', 'repeat', 'crossfade', 'sleep'];
 // Vị trí cần tua tới khi bắt đầu phát (trình duyệt di động hay bỏ qua currentTime đặt lúc chưa phát)
 let pendingSeek = 0;
+let preloadedId = null, preloader = null, lastPosSync = 0;
 
 export const usePlayer = defineStore('player', {
   state: () => ({
@@ -44,7 +45,7 @@ export const usePlayer = defineStore('player', {
   actions: {
     init() {
       decks.forEach((a, i) => {
-        a.ontimeupdate = () => { if (i === active) { this.time = a.currentTime; this.checkCrossfade(); this.tickSleep(); } };
+        a.ontimeupdate = () => { if (i === active) { this.time = a.currentTime; this.checkCrossfade(); this.tickSleep(); this.preloadNext(); this.syncPosition(); } };
         a.ondurationchange = () => { if (i === active) this.duration = a.duration || this.track?.duration || 0; };
         a.onplay = () => { if (i === active) { this.playing = true; this.applyPendingSeek(); } };
         a.onpause = () => { if (i === active && !fadeTimer) this.playing = false; };
@@ -65,6 +66,32 @@ export const usePlayer = defineStore('player', {
       window.addEventListener('beforeunload', () => this.persist());
       window.addEventListener('pagehide', () => this.persist());
       document.addEventListener('visibilitychange', () => { if (document.hidden) this.persist(); else this.tickSleep(); });
+      // Có mạng lại: nếu đang phát mà bị kẹt chờ tải (mất mạng giữa bài) thì nạp lại đúng vị trí và phát tiếp
+      window.addEventListener('online', () => {
+        const t = this.track;
+        if (t && this.playing && (this.buffering || cur().error)) this.loadTrack(t, { autoplay: true, startAt: this.time });
+      });
+    },
+    // Còn ~20s thì nạp trước bài kế tiếp (vào cache HTTP của trình duyệt) để chuyển bài không bị khựng chờ tải
+    preloadNext() {
+      const a = cur();
+      if (!a.duration || a.duration - a.currentTime > 20 || this.repeat === 'one') return;
+      const n = this.nextTrack;
+      if (!n || preloadedId === n.id || offline.blobs[n.id] || isOffline(n.id)) return;
+      preloadedId = n.id;
+      const p = new Audio(); p.preload = 'auto'; p.muted = true; p.src = n.fileUrl; p.load();
+      preloader = p; // giữ tham chiếu để trình duyệt không hủy giữa chừng
+    },
+    // Thanh tiến độ trên màn hình khóa / Control Center (gọi tối đa ~1 lần/giây)
+    syncPosition() {
+      const ms = navigator.mediaSession;
+      if (!ms?.setPositionState) return;
+      const now = Date.now();
+      if (now - lastPosSync < 1000) return;
+      lastPosSync = now;
+      const a = cur(), d = a.duration;
+      if (!(d > 0) || !isFinite(d)) return;
+      try { ms.setPositionState({ duration: d, position: Math.min(a.currentTime, d), playbackRate: a.playbackRate || 1 }); } catch {}
     },
     persist() { save('player', Object.fromEntries(PERSIST.map((k) => [k, this[k]]))); },
 
@@ -103,6 +130,8 @@ export const usePlayer = defineStore('player', {
       };
       // Đang mất mạng mà bài đã tải nhưng chưa có blob: tạo blob trước rồi mới phát
       if (!navigator.onLine && isOffline(t.id) && !offline.blobs[t.id]) ensureBlob(t).then(go); else go();
+      if (preloadedId === t.id) { preloader = null; preloadedId = null; }
+      lastPosSync = 0;
       this.updateMediaSession();
     },
     // Phát lỗi (thường do mất mạng) mà bài đã tải offline: phát lại từ bản đã tải, giữ vị trí
@@ -241,6 +270,7 @@ export const usePlayer = defineStore('player', {
         previoustrack: () => this.prev(), nexttrack: () => this.next(),
         seekbackward: () => this.skip(-10), seekforward: () => this.skip(10),
         seekto: (d) => this.seek(d.seekTime),
+        stop: () => { cur().pause(); },
       };
       for (const [k, fn] of Object.entries(h)) { try { ms.setActionHandler(k, fn); } catch {} }
     },

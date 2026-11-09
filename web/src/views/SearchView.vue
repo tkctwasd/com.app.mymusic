@@ -24,12 +24,14 @@ watch(() => ui.searchQ, (v) => { clearTimeout(timer); timer = setTimeout(() => {
 
 // Tìm trong lời bài hát (máy chủ), debounce để không gọi liên tục khi gõ
 const lyricHits = ref([]);
-let lyricTimer;
+let lyricTimer, lyricSeq = 0;
 watch(q, (v) => {
   clearTimeout(lyricTimer);
   const s = (v || '').trim();
+  const seq = ++lyricSeq; // chỉ nhận kết quả của lần gõ mới nhất (phản hồi cũ về muộn không ghi đè)
   if (s.length < 2) { lyricHits.value = []; return; }
-  lyricTimer = setTimeout(() => api(`/api/search/lyrics?q=${encodeURIComponent(s)}`).then((h) => { lyricHits.value = h; }).catch(() => {}), 350);
+  lyricTimer = setTimeout(() => api(`/api/search/lyrics?q=${encodeURIComponent(s)}`)
+    .then((h) => { if (seq === lyricSeq) lyricHits.value = h.filter((x) => lib.byId[x.id]); }).catch(() => {}), 350);
 });
 const playHit = (h) => { const t = lib.byId[h.id]; if (t) player.playTracks([t], 0, { name: 'Tìm trong lời bài hát', path: '' }); };
 

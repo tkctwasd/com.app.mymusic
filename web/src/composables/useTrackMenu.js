@@ -16,12 +16,34 @@ export async function toggleOffline(tracks) {
   ui.toast(fail ? `Tải được ${ok} bài, lỗi ${fail} bài (có thể do CORS hoặc mạng)` : `Đã tải ${ok} bài để nghe offline`);
 }
 
+// Radio: bắt đầu bằng bài đã chọn, tiếp theo là các bài cùng nghệ sĩ / album, rồi bài đã thích và hay nghe
+// (mỗi nhóm xáo trộn), tối đa 50 bài. Không cần server: dựa hoàn toàn vào thư viện ở client.
+export function playRadio(t) {
+  const lib = useLibrary(), player = usePlayer();
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const seen = new Set([t.id]);
+  const pick = (list) => shuffle(list.filter((x) => !seen.has(x.id))).map((x) => (seen.add(x.id), x));
+  const same = pick(lib.tracks.filter((x) => x.artist === t.artist || (t.album && x.album === t.album)));
+  const fav = pick(lib.tracks.filter((x) => x.liked || (x.playCount || 0) >= 3));
+  const rest = pick([...lib.tracks]);
+  // Xen kẽ: 2 bài cùng nghệ sĩ, 1 bài yêu thích... để không bị lặp một ca sĩ quá lâu
+  const out = [t];
+  while (out.length < 50 && (same.length || fav.length || rest.length)) {
+    for (let k = 0; k < 2 && same.length; k++) out.push(same.shift());
+    if (fav.length) out.push(fav.shift()); else if (rest.length) out.push(rest.shift());
+    if (!same.length && !fav.length && rest.length) out.push(rest.shift());
+  }
+  player.playTracks(out.slice(0, 50), 0, { name: `Radio: ${t.title}`, path: '' });
+  useUi().toast(`Đang phát radio từ "${t.title}"`);
+}
+
 export function useTrackMenu() {
   const player = usePlayer(), lib = useLibrary(), ui = useUi(), router = useRouter();
 
   return (e, t, { playlist } = {}) => ui.openMenu(e, [
     { label: 'Phát tiếp theo', icon: 'playNext', fn: () => { player.playNext(t.id); ui.toast('Sẽ phát tiếp theo'); } },
     { label: 'Thêm vào hàng đợi', icon: 'queue', fn: () => { player.addToQueue(t.id); ui.toast('Đã thêm vào hàng đợi'); } },
+    { label: 'Phát radio từ bài này', icon: 'shuffle', fn: () => playRadio(t) },
     { sep: true },
     {
       label: 'Thêm vào playlist', icon: 'plus',
