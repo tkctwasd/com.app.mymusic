@@ -37,7 +37,7 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 <template>
   <header class="top" :class="{ solid }">
     <div class="left">
-      <button v-if="!isTop" class="icon-btn back" title="Quay lại" @click="router.back()"><Icon name="chevronLeft" size="20" /></button>
+      <button class="icon-btn back" :class="{ hide: isTop }" :tabindex="isTop ? -1 : 0" :aria-hidden="isTop" title="Quay lại" @click="router.back()"><Icon name="chevronLeft" size="20" /></button>
       <RouterLink to="/" class="brand" @mouseenter="brandHover = true" @mouseleave="brandHover = false"><AppLogo :size="40" :animated="player.playing || brandHover" /><span class="display">My Music</span></RouterLink>
     </div>
 
@@ -70,6 +70,9 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
   transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
 .top.solid { background: color-mix(in oklab, color-mix(in oklab, var(--page-c, var(--surface)) 30%, var(--bg)) 78%, transparent); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); }
 .left { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.back { overflow: hidden; transition: width .35s var(--ease), margin .35s var(--ease), opacity .25s, color .2s, background .2s, transform .15s var(--ease); }
+/* Ẩn bằng cách thu bề rộng về 0 để logo trượt mượt thay vì nhảy */
+.back.hide { width: 0; margin-right: -4px; opacity: 0; pointer-events: none; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 12px; }
 .brand :deep(.logo) { border-radius: 10px; filter: drop-shadow(0 4px 10px rgb(0 0 0 / .3)); }
 .brand span { font-size: 16px; font-weight: 600; white-space: nowrap; }
