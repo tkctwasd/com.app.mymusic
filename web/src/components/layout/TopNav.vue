@@ -64,7 +64,9 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 </template>
 
 <style scoped>
-.top { position: fixed; z-index: 300; top: 0; left: 0; right: 0; height: var(--nav-h); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 0 20px;
+.top { position: fixed; z-index: 300; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+  /* Tai thỏ: chừa vùng an toàn cả trên lẫn hai bên (iPhone xoay ngang có bề rộng > 767px nên dùng layout này) */
+  height: calc(var(--nav-h) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
   transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
 .top.solid { background: var(--glass); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); border-bottom-color: var(--line); }
 .left { display: flex; align-items: center; gap: 4px; min-width: 0; }
@@ -96,7 +98,7 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
 @media (max-width: 1100px) { .ph { display: none; } .cmd { width: auto; } }
 @media (max-width: 767px) {
-  .top { grid-template-columns: 1fr auto; padding: 0 8px 0 12px; height: 56px; padding-top: env(safe-area-inset-top); height: calc(56px + env(safe-area-inset-top)); }
+  .top { grid-template-columns: 1fr auto; padding: env(safe-area-inset-top) calc(8px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left)); height: calc(56px + env(safe-area-inset-top)); }
   .brand span { font-size: 15px; }
 }
 </style>
