@@ -11,9 +11,11 @@ const idxOf = (v) => Math.max(0, items.indexOf(v));
 function onScroll() {
   clearTimeout(timer);
   timer = setTimeout(() => {
-    const v = items[Math.min(items.length - 1, Math.max(0, Math.round(el.value.scrollTop / ITEM)))];
-    if (v !== props.modelValue) emit('update:modelValue', v);
-  }, 80);
+    const i = Math.min(items.length - 1, Math.max(0, Math.round(el.value.scrollTop / ITEM)));
+    // Một số trình duyệt dừng lệch nửa ô: căn lại cho đúng giữa dải chọn
+    if (Math.abs(el.value.scrollTop - i * ITEM) > 1) go(i);
+    if (items[i] !== props.modelValue) emit('update:modelValue', items[i]);
+  }, 120);
 }
 const go = (i) => el.value.scrollTo({ top: i * ITEM, behavior: 'smooth' });
 onMounted(() => nextTick(() => { el.value.scrollTop = idxOf(props.modelValue) * ITEM; }));
@@ -32,12 +34,12 @@ watch(() => props.modelValue, (v) => { if (Math.round(el.value.scrollTop / ITEM)
 </template>
 
 <style scoped>
-.wheel { position: relative; flex: 1; height: 200px; }
-.list { height: 100%; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain;
+.wheel { position: relative; flex: 1; min-width: 0; height: 200px; overflow: hidden; touch-action: pan-y; }
+.list { height: 100%; overflow-y: auto; overflow-x: hidden; touch-action: pan-y; scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior: contain;
   -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); }
 .list::-webkit-scrollbar { display: none; }
 .pad { height: 80px; }
-.it { display: block; width: 100%; height: 40px; scroll-snap-align: center; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--text-3); transition: color .15s, transform .15s; padding-right: 44px; text-align: right; }
+.it { display: block; width: 100%; height: 40px; scroll-snap-align: center; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--text-3); transition: color .15s, transform .15s; padding-right: 44px; text-align: right; transform-origin: right center; }
 .it.on { color: var(--text); font-weight: 600; transform: scale(1.08); }
 .unit { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); font-size: 15px; font-weight: 500; color: var(--text-2); pointer-events: none; }
 </style>

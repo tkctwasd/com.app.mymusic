@@ -31,6 +31,6 @@ function save() {
 </template>
 
 <style scoped>
-.picker { position: relative; display: flex; gap: 8px; }
+.picker { position: relative; display: flex; gap: 8px; overflow: hidden; touch-action: pan-y; overscroll-behavior: contain; }
 .band { position: absolute; left: 0; right: 0; top: 50%; height: 40px; transform: translateY(-50%); border-radius: 12px; background: var(--hover); pointer-events: none; }
 </style>
