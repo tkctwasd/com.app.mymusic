@@ -114,7 +114,16 @@ onBeforeUnmount(() => {
   mq.removeEventListener('change', onMq);
 });
 
-watch(() => route.fullPath, () => { ui.scrollY = 0; main.value?.scrollTo(0, 0); ui.clearSelection(); });
+// Chuyển trang: nhớ vị trí cuộn của 3 tab chính; chỉ đặt lại cuộn khi trang mới sắp hiện
+// (cuộn ngay lúc đổi route làm trang cũ giật lên đầu trước khi biến mất)
+const TABS = ['ListenView', 'ShelfView', 'ExploreView'];
+const tabScroll = {};
+watch(() => route.fullPath, (_, from) => { if (from) tabScroll[from] = main.value?.scrollTop || 0; ui.clearSelection(); });
+function onBeforeEnter() {
+  const y = ['listen', 'shelf', 'explore'].includes(route.name) ? tabScroll[route.fullPath] || 0 : 0;
+  if (main.value) main.value.scrollTop = y;
+  ui.scrollY = y;
+}
 </script>
 
 <template>
@@ -130,7 +139,9 @@ watch(() => route.fullPath, () => { ui.scrollY = 0; main.value?.scrollTo(0, 0); 
     <TopNav />
     <main ref="main" class="main scroll" @scroll="ui.scrollY = $event.target.scrollTop">
       <RouterView v-slot="{ Component }">
-        <Transition name="fade" mode="out-in"><component :is="Component" :key="route.fullPath" /></Transition>
+        <Transition name="fade" mode="out-in" @before-enter="onBeforeEnter">
+          <KeepAlive :include="TABS" :max="6"><component :is="Component" :key="route.fullPath" /></KeepAlive>
+        </Transition>
       </RouterView>
     </main>
     <Dock />
