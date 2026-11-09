@@ -2,10 +2,12 @@
 import Icon from './Icon.vue';
 defineProps({ title: String, wide: Boolean });
 const emit = defineEmits(['close']);
+// Đóng bằng click thay vì pointerdown để cú click không xuyên xuống phần tử bên dưới
+let downOut = false;
 </script>
 
 <template>
-  <div class="backdrop" @pointerdown.self="emit('close')">
+  <div class="backdrop" @pointerdown.self="downOut = true" @click.self="downOut && emit('close'); downOut = false">
     <div class="modal" :class="{ wide }" role="dialog" aria-modal="true" :aria-label="title">
       <header>
         <h2>{{ title }}</h2>

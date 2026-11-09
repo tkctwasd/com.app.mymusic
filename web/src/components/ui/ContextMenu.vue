@@ -36,7 +36,14 @@ function run(it) { if (it.children) return; ui.menu = null; it.fn?.(); }
 const close = () => { ui.menu = null; };
 onMounted(() => { addEventListener('pointerdown', onDown); addEventListener('resize', close); addEventListener('wheel', close, { passive: true }); });
 onBeforeUnmount(() => { removeEventListener('pointerdown', onDown); removeEventListener('resize', close); removeEventListener('wheel', close); });
-function onDown(e) { if (ui.menu && !e.target.closest('.ctx')) close(); }
+// Bấm ra ngoài để đóng menu: nuốt luôn cú click đi kèm để không kích hoạt phần tử bên dưới
+function onDown(e) {
+  if (!ui.menu || e.target.closest('.ctx')) return;
+  close();
+  const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  addEventListener('click', swallow, { capture: true, once: true });
+  setTimeout(() => removeEventListener('click', swallow, { capture: true }), 600);
+}
 </script>
 
 <template>

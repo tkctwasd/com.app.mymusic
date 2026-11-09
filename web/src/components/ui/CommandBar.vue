@@ -24,6 +24,8 @@ const YT = /^https?:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\//;
 
 onMounted(() => input.value?.focus());
 const close = () => { ui.cmd = null; };
+// Đóng bằng click (không phải pointerdown): nếu gỡ nền mờ ngay lúc nhấn, cú click sẽ rơi xuyên xuống bài hát bên dưới
+let downOut = false;
 
 // ---- Lịch sử (dùng chung với trang Khám phá) ----
 const history = ref(load('searchHistory', []));
@@ -185,7 +187,7 @@ function onKey(e) {
 </script>
 
 <template>
-  <div class="cmd-back" @pointerdown.self="close">
+  <div class="cmd-back" @pointerdown.self="downOut = true" @click.self="downOut && close(); downOut = false">
     <div class="cmd" role="dialog" aria-label="Command bar">
       <div class="inp">
         <Icon :name="isLink ? 'youtube' : q.startsWith('>') ? 'terminal' : 'search'" size="20" class="lead" :class="{ yt: isLink }" />
