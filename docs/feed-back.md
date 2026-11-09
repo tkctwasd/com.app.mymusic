@@ -1,68 +1,55 @@
-# Kế hoạch cải thiện My Music
+# Đánh giá và đề xuất cải thiện My Music (09/11/2026)
 
 Trạng thái: `[ ]` chưa làm, `[x]` đã làm, `[~]` đang làm.
-Thứ tự ưu tiên từ trên xuống. Các mục chưa test trên iPhone thật đều cần kiểm tra lại.
+Mỗi nhóm xếp theo ưu tiên từ trên xuống. Mức độ: 🔴 nên làm sớm, 🟡 nên làm, 🟢 làm khi rảnh.
 
-## 1. Khởi động nhanh và hiệu năng
-- [x] Hiện giao diện ngay từ thư viện đã cache (IndexedDB), rồi tải dữ liệu mới ở nền. Hiện tại [App.vue](web/src/App.vue) đợi `lib.load()` xong mới hiển thị.
-- [x] Tách các trường nặng (`peaks`, `lyrics`, `plays`) khỏi `GET /api/tracks`, chỉ tải khi cần.
-- [x] Thêm nén phản hồi (`compression`) trong [server/src/index.js](server/src/index.js).
-- [x] Lazy-load các route/view ít dùng (`ArtistView`, `ExploreView`, ...).
-- [x] Virtual scroll cho danh sách bài dài. (dùng content-visibility cho dòng bài; chưa virtual DOM đầy đủ)
-- [x] Tự host font thay vì tải Google Fonts.
-- [ ] Đo trước và sau bằng Lighthouse / DevTools Network để so sánh.
+## Tóm tắt
+App đã khá hoàn chỉnh: khởi động từ cache, offline, crossfade, lời bài hát, chuyển trang mượt, PWA, hỗ trợ iPhone.
+Phần còn thiếu chủ yếu là **dọn code cũ**, **kiểm thử**, **trải nghiệm lần đầu/trạng thái rỗng** và **vài tính năng "giữ chân"** (thống kê, gợi ý).
 
-## 2. Server và triển khai (Render)
-- [x] Cài sẵn yt-dlp trong [Dockerfile](Dockerfile), ghim phiên bản, bỏ `pip install -U` lúc khởi động.
-- [x] Chuyển job import từ bộ nhớ sang DB (collection `jobs`) để không mất khi restart.
-- [ ] Kiểm tra `CLOUDINARY_URL` đã được set trên Render.
-- [ ] Cân nhắc gói Render không ngủ nếu dùng hằng ngày.
+## 1. Dọn dẹp code (dễ làm, lợi lâu dài)
+- [ ] 🔴 Xóa các file không còn được dùng (không có chỗ nào import): `views/HomeView.vue`, `views/LibraryView.vue`, `views/SearchView.vue`, `layout/Sidebar.vue`, `layout/RightPanel.vue`, `layout/PlayerBar.vue`, `layout/FullPlayer.vue`, `layout/MiniPlayer.vue`, `layout/FullscreenView.vue`. Kiểm tra thêm `Topbar.vue`, `TopNav.vue`, `MobileNav.vue`, `TrackTable.vue` (chỉ còn 1 chỗ tham chiếu). Giảm nhầm lẫn khi sửa giao diện.
+- [ ] 🟡 Cập nhật [readme.md](../readme.md): vẫn ghi "sẽ chuyển sang Vite + Pinia" và mô tả bố cục kiểu Spotify (Sidebar/Right panel) trong khi app đã là giao diện "Studio" (Dock, Stage, Command bar).
+- [ ] 🟢 Thêm ESLint + Prettier để code đồng nhất.
 
-## 3. Phát nhạc trên iPhone
-- [x] Âm lượng: Safari iOS bỏ qua `audio.volume`. Ẩn thanh âm lượng trong app trên iOS, hoặc dùng Web Audio API (`GainNode`) cho crossfade và fade-out hẹn giờ.
-- [x] Phát nền và khóa màn hình: kiểm tra chuyển bài tự động, crossfade và hẹn giờ khi khóa. Tắt crossfade khi chạy nền nếu cần. (đã tắt crossfade trên iOS; phát nền khi khóa màn hình CHƯA kiểm tra trên máy thật)
-- [x] Đăng nhập: ghi chú trong [InstallHint.vue](web/src/components/ui/InstallHint.vue) rằng app trên màn hình chính có thể cần đăng nhập lại. (đã thêm ghi chú vào hướng dẫn cài)
-- [ ] Test checklist: thêm vào màn hình chính, khóa màn hình giữa bài, tắt mạng, đóng/mở lại app, upload từ app Files.
+## 2. Hiệu năng
+- [ ] 🟡 Tìm trong lời bài hát ([server/src/index.js](../server/src/index.js) `/api/search/lyrics`) đang tải **toàn bộ** bài từ MongoDB rồi lọc bằng JS mỗi lần gõ. Nên dùng text index của MongoDB (hoặc `$regex` + projection chỉ lấy `lyrics`, `title`, `artist`, `coverUrl`), và debounce phía client ~300ms.
+- [ ] 🟡 `GET /api/tracks` luôn trả cả thư viện. Thêm `ETag`/`If-None-Match` (hoặc `?since=updatedAt`) để lần mở sau chỉ nhận 304 / phần thay đổi — tiết kiệm mạng trên điện thoại.
+- [ ] 🟡 Ảnh bìa: dùng biến đổi của Cloudinary (`w_300,f_auto,q_auto`) cho ảnh nhỏ trong danh sách, ảnh gốc chỉ cho Stage. Thêm `loading="lazy"` và `decoding="async"` nếu chưa có.
+- [ ] 🟢 Service worker ([web/public/sw.js](../web/public/sw.js)): cache asset không bao giờ bị dọn (tên cache cố định `my-music-v1`, file hash cũ tích tụ). Nên xóa asset cũ khi có bản mới, hoặc giới hạn số mục.
+- [ ] 🟢 Virtual scroll thật sự cho thư viện > 1000 bài (hiện dùng `content-visibility`, ổn với vài trăm bài).
+- [ ] 🟢 Đo Lighthouse trước/sau (việc còn tồn từ kế hoạch cũ).
 
-## 4. Nghe offline
-- [x] Tải bài hoặc playlist về máy để nghe khi mất mạng.
-- [x] Service worker cache file nhạc đã tải, tránh cache toàn bộ thư viện. (thiết kế: Cache Storage của trang, chỉ bài người dùng tải về; không cache cả thư viện)
-- [x] Hiển thị trạng thái "đã tải" và dung lượng đã dùng. (nhãn trong menu bài và số bài/dung lượng trong Cài đặt; chưa có dấu trên từng dòng)
+## 3. Giao diện: đơn giản, hiện đại, dễ dùng
+- [ ] 🔴 **Trạng thái rỗng + lần đầu dùng**: thư viện trống thì hiện 1 màn hình hướng dẫn rõ ràng với nút lớn "Dán link YouTube" / "Chọn file", thay vì các kệ trống.
+- [ ] 🔴 **Skeleton thống nhất** khi tải (trang nghệ sĩ, lời bài hát, kết quả tìm lời) để không bị nhảy bố cục.
+- [ ] 🟡 Màn hình Đang phát trên điện thoại: ưu tiên ảnh bìa lớn + 3 nút chính (Trước / Phát / Sau); đưa Shuffle, Repeat, Hẹn giờ, Crossfade vào một hàng phụ hoặc menu "…". Giảm số nút nhìn thấy cùng lúc.
+- [ ] 🟡 Vuốt (gesture) trên điện thoại: vuốt trái/phải trên mini player để đổi bài, vuốt xuống để thu nhỏ Đang phát, vuốt trái một dòng bài để "Phát tiếp theo".
+- [ ] 🟡 Dấu "đã tải offline" trên từng dòng bài (hiện chỉ có trong menu và Cài đặt).
+- [ ] 🟡 Hoàn tác (Undo) trong toast khi xóa bài/xóa khỏi playlist, thay cho hộp xác nhận — nhanh hơn, ít phiền hơn.
+- [ ] 🟢 Chế độ sáng/tối theo hệ thống, kiểm tra độ tương phản chữ phụ (`--text-2`) đạt WCAG AA trên nền màu động từ ảnh bìa.
+- [ ] 🟢 Khả năng truy cập: `aria-label` cho các nút chỉ có icon, điều hướng bằng bàn phím trong danh sách bài, focus ring rõ ràng.
 
-## 5. Giao diện trên điện thoại
-- [x] Splash screen iOS (`apple-touch-startup-image`) để không hiện màn hình trống khi mở app. (đã tạo 3 cỡ iPhone 390x844, 393x852, 430x932)
-- [x] Bọc hiệu ứng `:hover` trong `@media (hover: hover)` để không bị dính sau khi chạm.
-- [x] Vùng bấm tối thiểu 44px trên điện thoại (`.icon-btn` hiện 36px).
-- [x] Dùng `100dvh` có fallback thay cho `100vh` trong [base.css](web/src/styles/base.css).
-- [x] Menu trên điện thoại dùng bottom sheet thay cho menu ngữ cảnh.
-- [ ] Skeleton và trạng thái rỗng/đang tải thống nhất.
-- [x] Hỗ trợ `prefers-reduced-motion`.
-- [ ] Màn hình đang phát rút gọn điều khiển, ưu tiên ảnh bìa.
+## 4. Tính năng nên thêm
+- [ ] 🟡 **Thống kê nghe nhạc**: top bài / nghệ sĩ theo tuần, tháng, năm; tổng giờ nghe; "Nhìn lại năm 2026" (kiểu tổng kết cuối năm) — dữ liệu `plays`, `lastPlayedAt` đã có.
+- [ ] 🟡 **Radio từ một bài**: phát liên tục các bài cùng nghệ sĩ/album/playlist có chung bài đó, tự nối hàng đợi khi hết.
+- [ ] 🟡 **Import playlist YouTube** (cả danh sách một lần) nếu chưa hỗ trợ; tự đề xuất bài mới của nghệ sĩ đã có.
+- [ ] 🟡 **Chuẩn hóa âm lượng** (loudness normalization) giữa các bài: tính khi import bằng ffmpeg `loudnorm`, lưu gain vào track.
+- [ ] 🟢 Equalizer đơn giản (Bass / Treble) bằng Web Audio API (lưu ý giới hạn iOS).
+- [ ] 🟢 Sắp xếp/lọc thư viện: theo ngày thêm, lượt nghe, thời lượng; lọc "chưa có lời", "chưa có ảnh bìa" để dọn dữ liệu.
+- [ ] 🟢 Tự động sao lưu định kỳ (hằng tuần) ra Cloudinary hoặc tải file JSON về.
+- [ ] 🟢 Chia sẻ playlist qua link chỉ-xem.
 
-## 6. Bảo mật
-- [x] Chuyển token SSE khỏi query string ([library.js](web/src/stores/library.js)) sang cookie hoặc cách khác, tránh ghi vào log.
-- [x] Thêm rate limit cho `/api/login`.
-- [ ] Cân nhắc URL nhạc Cloudinary là public: đánh giá rủi ro nếu URL bị lộ.
+## 5. Ổn định và bảo mật
+- [ ] 🔴 **Chưa có test nào.** Tối thiểu: test logic hàng đợi/shuffle/repeat trong [player.js](../web/src/stores/player.js) (Vitest) và test API chính của server. Đây là phần dễ vỡ nhất khi sửa.
+- [ ] 🟡 Theo dõi lỗi: ghi lỗi client (`window.onerror`, lỗi phát audio) gửi về `/api/log`, xem được trong Cài đặt — giúp bắt lỗi trên iPhone mà không cần cắm máy.
+- [ ] 🟡 Mật khẩu: `APP_SECRET` mặc định bằng chính mật khẩu → nên bắt buộc đặt `APP_SECRET` riêng; đổi mật khẩu thì token cũ vẫn dùng được nếu secret không đổi.
+- [ ] 🟢 Giới hạn `/api/upload` 200MB và `/api/restore` 50MB: thêm kiểm tra kiểu file (chỉ audio) và rate limit.
+- [ ] 🟢 Việc còn tồn: test checklist trên iPhone thật (khóa màn hình, mất mạng, mở lại app), kiểm tra `CLOUDINARY_URL` và gói Render.
 
-## 7. Tính năng mới
-- [x] Chống trùng lặp khi import (kiểm tra video YouTube đã có trong thư viện). (đã có sẵn từ trước: kiểm tra theo ID video)
-- [ ] Thống kê: top tuần/tháng, bài nghe nhiều nhất (dựa trên `plays`, `lastPlayedAt`).
-- [x] Playlist thông minh: "Mới thêm", "Nghe gần đây", "Chưa nghe bao giờ". (đã thêm kệ Chưa nghe bao giờ; Mix từ bài đã thích)
-- [x] Sao lưu và khôi phục thư viện (xuất/nhập JSON). (Cài đặt > Dữ liệu; khôi phục là upsert, không xóa bài hiện có)
-- [x] Tìm kiếm trong lời bài hát.
-- [x] Mix từ bài đã thích.
-- [x] Nhập nhiều file cùng lúc từ iPhone (kéo thả hoặc chọn từ Files). (đã có sẵn: chọn nhiều file và kéo-thả)
-
-## 8. Không làm (tạm thời)
-- Viết lại server bằng Rust hoặc C++: nút thắt nằm ở mạng và YouTube, không nằm ở ngôn ngữ.
-- Viết lại app bằng SwiftUI: cân nhắc sau, nếu Capacitor không đủ.
-
-
-## Ghi chú: việc còn lại hoặc cần bạn quyết định
-- Đo bằng Lighthouse: chưa làm (cần chạy trên trình duyệt có Lighthouse). Kích thước bundle JS hiện ~81KB gzip.
-- Stage (màn hình đang phát) trên điện thoại: cần chọn điều khiển nào ẩn, chưa đổi.
-- Skeleton: màn hình khởi động đã hiện ngay từ cache, nên chưa cần thêm.
-- Thống kê theo tuần/tháng: bảng xếp hạng hiện có (TopChart) đã theo ngày/giờ; chưa thêm trang thống kê riêng.
-- Cloudinary: URL nhạc vẫn public (ID ngẫu nhiên). Giữ nguyên vì đổi sang URL có chữ ký sẽ làm chậm phát; cân nhắc nếu app công khai.
-- Render: kiểm tra CLOUDINARY_URL và gói có ngủ hay không là việc trên dashboard Render, bạn cần làm.
-- Cài đặt phát nền trên iPhone: cần test thật theo checklist mục 3.
+## Đề xuất thứ tự làm
+1. Xóa file thừa + cập nhật readme (nửa ngày).
+2. Màn hình rỗng/lần đầu + skeleton + Undo khi xóa.
+3. Test cho player store.
+4. Tối ưu tìm lời + ETag cho danh sách bài + ảnh bìa thu nhỏ.
+5. Thống kê nghe nhạc và Radio từ một bài.
