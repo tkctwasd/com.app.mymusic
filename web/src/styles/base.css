@@ -65,9 +65,13 @@ kbd { font: 600 11px var(--font); padding: 2px 7px; border-radius: 6px; backgrou
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.fade-enter-active, .fade-leave-active { transition: opacity .2s var(--ease), transform .25s var(--ease); }
-.fade-enter-from { opacity: 0; transform: translateY(8px); }
+.fade-enter-active { transition: opacity .18s var(--ease), transform .22s var(--ease); }
+/* Trang cũ biến mất ngay (không mờ dần) để chuyển trang không có nhịp trống như bị nạp lại */
+.fade-leave-active { transition: none; }
+.fade-enter-from { opacity: 0; transform: translateY(6px); }
 .fade-leave-to { opacity: 0; }
+/* Đang chuyển trang thì không nhận click: tránh bấm nhầm vào trang cũ / trang mới chưa hiện xong */
+.fade-enter-active, .fade-leave-active { pointer-events: none; }
 
 .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 40px 0 14px; }
 .section-title h2 { font: 600 19px var(--font-display); letter-spacing: -.01em; }

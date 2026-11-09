@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'listen', component: () => import('./views/ListenView.vue') },
@@ -19,3 +19,12 @@ export default createRouter({
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
+
+// Tải sẵn mọi trang khi rảnh: lần đầu bấm chuyển trang không phải chờ tải file JS (cảm giác như trang bị nạp lại)
+const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1500));
+router.isReady().then(() => idle(() => router.getRoutes().forEach((r) => {
+  const c = r.components?.default;
+  if (typeof c === 'function') c().catch(() => {});
+})));
+
+export default router;
