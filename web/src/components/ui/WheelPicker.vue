@@ -39,7 +39,7 @@ watch(() => props.modelValue, (v) => { if (Math.round(el.value.scrollTop / ITEM)
   -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent); }
 .list::-webkit-scrollbar { display: none; }
 .pad { height: 80px; }
-.it { display: block; width: 100%; height: 40px; scroll-snap-align: center; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--text-3); transition: color .15s, transform .15s; padding-right: 44px; text-align: right; transform-origin: right center; }
+.it { display: block; width: 100%; height: 40px; scroll-snap-align: center; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--text-3); transition: color .15s, transform .15s; padding-right: calc(50% + 2px); text-align: right; transform-origin: right center; }
 .it.on { color: var(--text); font-weight: 600; transform: scale(1.08); }
-.unit { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); font-size: 15px; font-weight: 500; color: var(--text-2); pointer-events: none; }
+.unit { position: absolute; top: 50%; left: calc(50% + 8px); transform: translateY(-50%); font-size: 15px; font-weight: 500; color: var(--text-2); pointer-events: none; }
 </style>
