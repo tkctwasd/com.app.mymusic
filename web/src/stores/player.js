@@ -114,6 +114,8 @@ export const usePlayer = defineStore('player', {
     },
     loadTrack(t, { autoplay = true, startAt = 0 } = {}) {
       this.stopFade();
+      // Đổi sang bài khác thì bỏ chế độ lặp một bài (lặp chỉ áp dụng cho bài đang nghe)
+      if (this.repeat === 'one' && this.currentId && this.currentId !== t.id) this.repeat = 'off';
       this.currentId = t.id;
       const a = cur();
       other().pause();

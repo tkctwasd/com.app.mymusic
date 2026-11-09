@@ -16,6 +16,7 @@ import ImportModal from './components/modals/ImportModal.vue';
 import EditTrackModal from './components/modals/EditTrackModal.vue';
 import EditPlaylistModal from './components/modals/EditPlaylistModal.vue';
 import SettingsModal from './components/modals/SettingsModal.vue';
+import SleepModal from './components/modals/SleepModal.vue';
 import LoginView from './views/LoginView.vue';
 import Icon from './components/ui/Icon.vue';
 import AppLogo from './components/ui/AppLogo.vue';
@@ -35,7 +36,7 @@ const lib = useLibrary(), player = usePlayer(), ui = useUi(), route = useRoute()
 const state = ref('loading'); // loading | login | ready | error
 const error = ref('');
 const main = ref(null);
-const modals = { import: ImportModal, editTrack: EditTrackModal, editPlaylist: EditPlaylistModal, settings: SettingsModal };
+const modals = { import: ImportModal, editTrack: EditTrackModal, editPlaylist: EditPlaylistModal, settings: SettingsModal, sleep: SleepModal };
 const YT = /https?:\/\/(www\.|m\.|music\.)?(youtube\.com|youtu\.be)\/\S+/;
 const dropping = ref(false);
 let es;

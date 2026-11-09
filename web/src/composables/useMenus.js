@@ -8,8 +8,9 @@ export function useMenus() {
   const player = usePlayer(), lib = useLibrary(), ui = useUi(), router = useRouter(), route = useRoute();
 
   const sleepItems = () => [
-    ...[5, 15, 30, 45, 60, 90].map((m) => ({ label: `${m} phút`, fn: () => { player.setSleep(m); ui.toast(`Sẽ dừng phát sau ${m} phút`); } })),
+    ...[5, 15, 30].map((m) => ({ label: `${m} phút`, fn: () => { player.setSleep(m); ui.toast(`Sẽ dừng phát sau ${m} phút`); } })),
     { label: 'Hết bài này', fn: () => { player.setSleep('end'); ui.toast('Sẽ dừng khi hết bài này'); } },
+    { label: 'Tùy chỉnh…', icon: 'edit', fn: () => ui.open('sleep') },
     player.sleep && { sep: true },
     player.sleep && { label: 'Tắt hẹn giờ', icon: 'x', fn: () => { player.setSleep(null); ui.toast('Đã tắt hẹn giờ'); } },
   ].filter(Boolean);

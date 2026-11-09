@@ -1,4 +1,5 @@
 <script setup>
+import { useMenus } from '../../composables/useMenus.js';
 import { ref, computed } from 'vue';
 import Icon from '../ui/Icon.vue';
 import Cover from '../ui/Cover.vue';
@@ -16,15 +17,8 @@ const t = computed(() => player.track);
 const volIcon = computed(() => (player.muted || !player.volume ? 'volumeX' : player.volume < 0.5 ? 'volumeLow' : 'volume'));
 const repeatTitle = { off: 'Bật lặp lại', all: 'Bật lặp lại một bài', one: 'Tắt lặp lại' };
 
-function sleepMenu(e) {
-  const on = player.sleep;
-  ui.openMenu(e, [
-    ...[5, 15, 30, 45, 60, 90].map((m) => ({ label: `${m} phút`, fn: () => { player.setSleep(m); ui.toast(`Sẽ dừng phát sau ${m} phút`); } })),
-    { label: 'Hết bài này', fn: () => { player.setSleep('end'); ui.toast('Sẽ dừng khi hết bài này'); } },
-    on && { sep: true },
-    on && { label: 'Tắt hẹn giờ', icon: 'x', fn: () => { player.setSleep(null); ui.toast('Đã tắt hẹn giờ'); } },
-  ].filter(Boolean));
-}
+const { sleepItems } = useMenus();
+function sleepMenu(e) { ui.openMenu(e, sleepItems()); }
 </script>
 
 <template>
