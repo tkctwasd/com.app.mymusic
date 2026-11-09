@@ -67,8 +67,13 @@ const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 .top { position: fixed; z-index: 300; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
   /* Tai thỏ: chừa vùng an toàn cả trên lẫn hai bên (iPhone xoay ngang có bề rộng > 767px nên dùng layout này) */
   height: calc(var(--nav-h) + env(safe-area-inset-top)); padding: env(safe-area-inset-top) calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
-  transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
-.top.solid { background: color-mix(in oklab, color-mix(in oklab, var(--page-c, var(--surface)) 30%, var(--bg)) 78%, transparent); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); }
+  isolation: isolate; }
+/* Nền kính nằm ở lớp ::before, tràn ra ngoài 2 mép màn hình: tránh viền sáng ở cạnh do backdrop-filter
+   (blur lấy mẫu vùng ngoài màn hình) khiến thanh trông như bị thụt vào trong */
+.top::before { content: ''; position: absolute; z-index: -1; inset: 0 -40px; opacity: 0; transition: opacity .3s;
+  background: color-mix(in oklab, color-mix(in oklab, var(--page-c, var(--surface)) 30%, var(--bg)) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); }
+.top.solid::before { opacity: 1; }
 .left { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .back { overflow: hidden; transition: width .35s var(--ease), margin .35s var(--ease), opacity .25s, color .2s, background .2s, transform .15s var(--ease); }
 /* Ẩn bằng cách thu bề rộng về 0 để logo trượt mượt thay vì nhảy */
