@@ -38,7 +38,14 @@ watch(activeIdx, async (i) => {
   if (i < 0 || Date.now() - userScrolled.value < 3000) return;
   await nextTick();
   const el = box.value?.querySelector(`[data-i="${i}"]`);
-  el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  if (!el) return;
+  // Không dùng scrollIntoView: trên iPhone nó cuộn luôn cả trang/khung cố định, đẩy mất nút Thu nhỏ và thanh dưới.
+  // Chỉ cuộn khung chứa gần nhất có thể cuộn (ô lời hoặc màn Đang phát).
+  let sc = box.value;
+  while (sc && !(sc.scrollHeight > sc.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement;
+  if (!sc || sc === document.body || sc === document.documentElement) return;
+  const r = el.getBoundingClientRect(), s = sc.getBoundingClientRect();
+  sc.scrollTo({ top: sc.scrollTop + (r.top - s.top) - (sc.clientHeight - r.height) / 2, behavior: 'smooth' });
 });
 </script>
 

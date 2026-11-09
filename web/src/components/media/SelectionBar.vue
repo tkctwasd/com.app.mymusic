@@ -32,7 +32,7 @@ function addTo(e) {
 
 <template>
   <Transition name="sb">
-    <div v-if="tracks.length" class="sb">
+    <div v-if="tracks.length && !ui.stage" class="sb">
       <button class="icon-btn" title="Bỏ chọn (Esc)" @click="ui.clearSelection()"><Icon name="x" size="18" /></button>
       <b>{{ tracks.length }} đã chọn</b>
       <span class="sep" />
