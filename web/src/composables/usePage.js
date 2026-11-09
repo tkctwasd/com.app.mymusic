@@ -1,4 +1,4 @@
-// Mỗi trang khai báo màu / tiêu đề / nút Play để Topbar dùng khi cuộn
+// Mỗi trang khai báo màu / tiêu đề / nút Play để TopNav dùng khi cuộn
 import { watchEffect, onBeforeUnmount } from 'vue';
 import { useUi } from '../stores/ui.js';
 

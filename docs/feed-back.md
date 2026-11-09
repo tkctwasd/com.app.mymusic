@@ -8,8 +8,8 @@ App đã khá hoàn chỉnh: khởi động từ cache, offline, crossfade, lờ
 Phần còn thiếu chủ yếu là **dọn code cũ**, **kiểm thử**, **trải nghiệm lần đầu/trạng thái rỗng** và **vài tính năng "giữ chân"** (thống kê, gợi ý).
 
 ## 1. Dọn dẹp code (dễ làm, lợi lâu dài)
-- [ ] 🔴 Xóa các file không còn được dùng (không có chỗ nào import): `views/HomeView.vue`, `views/LibraryView.vue`, `views/SearchView.vue`, `layout/Sidebar.vue`, `layout/RightPanel.vue`, `layout/PlayerBar.vue`, `layout/FullPlayer.vue`, `layout/MiniPlayer.vue`, `layout/FullscreenView.vue`. Kiểm tra thêm `Topbar.vue`, `TopNav.vue`, `MobileNav.vue`, `TrackTable.vue` (chỉ còn 1 chỗ tham chiếu). Giảm nhầm lẫn khi sửa giao diện.
-- [ ] 🟡 Cập nhật [readme.md](../readme.md): vẫn ghi "sẽ chuyển sang Vite + Pinia" và mô tả bố cục kiểu Spotify (Sidebar/Right panel) trong khi app đã là giao diện "Studio" (Dock, Stage, Command bar).
+- [x] 🔴 Xóa các file không còn được dùng: HomeView, LibraryView, SearchView, Sidebar, RightPanel, PlayerBar, FullPlayer, MiniPlayer, FullscreenView, TrackTable. (TopNav, MobileNav vẫn đang dùng)
+- [x] 🟡 Cập nhật [readme.md](../readme.md) theo giao diện "Studio" hiện tại.
 - [ ] 🟢 Thêm ESLint + Prettier để code đồng nhất.
 
 ## 2. Hiệu năng
@@ -26,7 +26,6 @@ Phần còn thiếu chủ yếu là **dọn code cũ**, **kiểm thử**, **tr�
 - [ ] 🟡 Màn hình Đang phát trên điện thoại: ưu tiên ảnh bìa lớn + 3 nút chính (Trước / Phát / Sau); đưa Shuffle, Repeat, Hẹn giờ, Crossfade vào một hàng phụ hoặc menu "…". Giảm số nút nhìn thấy cùng lúc.
 - [ ] 🟡 Vuốt (gesture) trên điện thoại: vuốt trái/phải trên mini player để đổi bài, vuốt xuống để thu nhỏ Đang phát, vuốt trái một dòng bài để "Phát tiếp theo".
 - [ ] 🟡 Dấu "đã tải offline" trên từng dòng bài (hiện chỉ có trong menu và Cài đặt).
-- [ ] 🟡 Hoàn tác (Undo) trong toast khi xóa bài/xóa khỏi playlist, thay cho hộp xác nhận — nhanh hơn, ít phiền hơn.
 - [ ] 🟢 Chế độ sáng/tối theo hệ thống, kiểm tra độ tương phản chữ phụ (`--text-2`) đạt WCAG AA trên nền màu động từ ảnh bìa.
 - [ ] 🟢 Khả năng truy cập: `aria-label` cho các nút chỉ có icon, điều hướng bằng bàn phím trong danh sách bài, focus ring rõ ràng.
 
@@ -48,8 +47,8 @@ Phần còn thiếu chủ yếu là **dọn code cũ**, **kiểm thử**, **tr�
 - [ ] 🟢 Việc còn tồn: test checklist trên iPhone thật (khóa màn hình, mất mạng, mở lại app), kiểm tra `CLOUDINARY_URL` và gói Render.
 
 ## Đề xuất thứ tự làm
-1. Xóa file thừa + cập nhật readme (nửa ngày).
-2. Màn hình rỗng/lần đầu + skeleton + Undo khi xóa.
+1. ~~Xóa file thừa + cập nhật readme~~ (xong).
+2. Màn hình rỗng/lần đầu + skeleton.
 3. Test cho player store.
 4. Tối ưu tìm lời + ETag cho danh sách bài + ảnh bìa thu nhỏ.
 5. Thống kê nghe nhạc và Radio từ một bài.
